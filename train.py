@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 from dataset import CWRUSpectrograms, create_transform, create_target_transform
 
 
@@ -20,6 +22,9 @@ def main() -> None:
         train_ds = CWRUSpectrograms(train_file, transform, target_transform)
         test_ds = CWRUSpectrograms(test_file, transform, target_transform)
         val_ds = CWRUSpectrograms(val_file, transform, target_transform)
+
+        image, target = train_ds[1000]
+        print(f'{image.shape}\t{target}')
         
 
 
