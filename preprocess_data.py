@@ -7,6 +7,13 @@ import scipy
 from sklearn.model_selection import train_test_split
 
 
+DATA_ROOT = 'data'
+CSV_ROOT = 'csv'
+TEST_SIZE = 0.1
+VAL_SIZE = 0.1
+RANDOM_STATE = 42
+
+
 def create_df(data_files, end, sample_length):
         
     data_dict = {
@@ -49,45 +56,46 @@ def create_df(data_files, end, sample_length):
     return df
 
 
-def split_df(df, test_size, val_size):
+def split_df(df, test_size, val_size, random_state=None):
     eval_size = test_size + val_size
     train_df, eval_df = train_test_split(
-        df, test_size=eval_size, stratify=df.fault
+        df, 
+        test_size=eval_size, 
+        random_state=random_state, 
+        stratify=df.fault
     )
     test_df, val_df = train_test_split(
-        eval_df, test_size=val_size / eval_size, stratify=eval_df.fault
+        eval_df, 
+        test_size=val_size / eval_size,
+        random_state=random_state,
+        stratify=eval_df.fault,
     )
     return train_df, test_df, val_df
 
 
 def main() -> None:
 
-    data_root = 'data'
-    normal_root = f'{data_root}/Normal'
-    csv_root = 'csv'
-    test_size = 0.1
-    val_size = 0.1
-
+    normal_root = f'{DATA_ROOT}/Normal'
     normal_files = glob.glob(f'{normal_root}/*.mat')
-    os.makedirs(csv_root, exist_ok=True)
+    os.makedirs(CSV_ROOT, exist_ok=True)
 
     for sampling_rate, end in zip(['12k', '12k', '48k'], ['DE', 'FE', 'DE']):
 
-        fault_root = f'{data_root}/{sampling_rate}_{end}'
+        fault_root = f'{DATA_ROOT}/{sampling_rate}_{end}'
         fault_files = glob.glob(f'{fault_root}/*.mat')
         data_files = normal_files + fault_files
         sample_length = 2048 if sampling_rate == '12k' else 8192
         df = create_df(data_files, end, sample_length)
 
-        train_df, test_df, val_df = split_df(df, test_size, val_size)
+        train_df, test_df, val_df = split_df(df, TEST_SIZE, VAL_SIZE)
         train_df.to_csv(
-            f'{csv_root}/{sampling_rate}_{end}_train.csv', index=False
+            f'{CSV_ROOT}/{sampling_rate}_{end}_train.csv', index=False
         )
         test_df.to_csv(
-            f'{csv_root}/{sampling_rate}_{end}_test.csv', index=False
+            f'{CSV_ROOT}/{sampling_rate}_{end}_test.csv', index=False
         )
         val_df.to_csv(
-            f'{csv_root}/{sampling_rate}_{end}_val.csv', index=False
+            f'{CSV_ROOT}/{sampling_rate}_{end}_val.csv', index=False
         )
 
 

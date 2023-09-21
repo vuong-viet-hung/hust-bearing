@@ -3,8 +3,15 @@ import torch
 import pandas as pd
 
 from dataset import (
-    CWRUSpectrograms, LabelEncoder, create_transform, create_target_transform
+    CWRUSpectrograms,
+    decode_label, 
+    create_transform,
 )
+
+
+CSV_ROOT = 'csv'
+IMAGE_SIZE = (64, 64)
+BATCH_SIZE = 32
 
 
 def plot_samples(
@@ -14,7 +21,7 @@ def plot_samples(
 
     for idx, ax in enumerate(axes.flat):
         image, target = dataset[idx]
-        label = LabelEncoder.decode(int(target))
+        label = decode_label(target)
         ax.imshow(image.squeeze())
         ax.set_title(label)
 
@@ -22,15 +29,12 @@ def plot_samples(
 
 
 def main() -> None:
-    csv_root = 'csv'
-    image_size = (64, 64)
-    batch_size = 32
 
     for sampling_rate, end in zip(['12k', '12k', '48k'], ['DE', 'FE', 'DE']):
 
-        train_file = f'{csv_root}/{sampling_rate}_{end}_train.csv'
-        test_file = f'{csv_root}/{sampling_rate}_{end}_test.csv'
-        val_file = f'{csv_root}/{sampling_rate}_{end}_val.csv'
+        train_file = f'{CSV_ROOT}/{sampling_rate}_{end}_train.csv'
+        test_file = f'{CSV_ROOT}/{sampling_rate}_{end}_test.csv'
+        val_file = f'{CSV_ROOT}/{sampling_rate}_{end}_val.csv'
 
         train_df = pd.read_csv(train_file)
         test_df = pd.read_csv(test_file)
@@ -38,19 +42,18 @@ def main() -> None:
 
         transform = create_transform(
             sampling_rate=12000 if sampling_rate == '12k' else 48000,
-            image_size=image_size,
+            image_size=IMAGE_SIZE,
         )
-        target_transform = create_target_transform()
 
-        train_ds = CWRUSpectrograms(train_df, transform, target_transform)
-        test_ds = CWRUSpectrograms(test_df, transform, target_transform)
-        val_ds = CWRUSpectrograms(val_df, transform, target_transform)
+        train_ds = CWRUSpectrograms(train_df, transform)
+        test_ds = CWRUSpectrograms(test_df, transform)
+        val_ds = CWRUSpectrograms(val_df, transform)
 
         plot_samples(train_ds, f'plots/{sampling_rate}_{end}.png')
 
-        train_dl = torch.utils.data.DataLoader(train_ds, batch_size, shuffle=True)
-        test_dl = torch.utils.data.DataLoader(test_ds, batch_size, shuffle=True)
-        val_dl = torch.utils.data.DataLoader(val_ds, batch_size, shuffle=True)
+        train_dl = torch.utils.data.DataLoader(train_ds, BATCH_SIZE, shuffle=True)
+        test_dl = torch.utils.data.DataLoader(test_ds, BATCH_SIZE, shuffle=True)
+        val_dl = torch.utils.data.DataLoader(val_ds, BATCH_SIZE, shuffle=True)
 
 
 if __name__ == '__main__':

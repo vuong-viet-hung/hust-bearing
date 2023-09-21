@@ -7,17 +7,17 @@ import pandas as pd
 import scipy
 
 
-class LabelEncoder:
+FAULTS = ['Normal', 'B', 'IR', 'OR']
+MOTOR_SPEEDS = [1797, 1772, 1750, 1730]
 
-    classes = ['Normal', 'B', 'IR', 'OR']
 
-    @classmethod
-    def encode(cls, fault: str) -> int:
-        return cls.classes.index(fault)
-    
-    @classmethod
-    def decode(cls, target: int) -> str:
-        return cls.classes[target]
+def encode_label(fault: str) -> torch.Tensor:
+    target = FAULTS.index(fault)
+    return torch.tensor(target, dtype=torch.long)
+
+
+def decode_label(target: torch.Tensor) -> str:
+    return FAULTS[int(target)]
 
 
 def create_transform(
@@ -25,30 +25,20 @@ def create_transform(
     image_size: tuple[int, int]
 ) -> Callable[[np.ndarray, int], torch.Tensor]:
 
-    motor_speeds = [1797, 1772, 1750, 1730]
     resize = torchvision.transforms.Resize(image_size, antialias=True)
     
     def transform(signal: np.ndarray, load: int) -> torch.Tensor:
         signal = torch.tensor(signal, dtype=torch.float)
-        motor_speed = motor_speeds[load]
+        motor_speed = MOTOR_SPEEDS[load]
         n_fft = sampling_rate * 60 // motor_speed
         image = (
             torch.stft(signal, n_fft, normalized=True, return_complex=True)
             .unsqueeze(dim=0).abs()
         )
-        resize_image = resize(image)
-        return resize_image
+        resized_image = resize(image)
+        return resized_image
 
     return transform
-
-
-def create_target_transform() -> Callable[[str], torch.Tensor]:
-
-    def target_transform(fault: str) -> torch.Tensor:
-        target = LabelEncoder.encode(fault)
-        return torch.tensor(target, dtype=torch.long)
-
-    return target_transform
 
 
 class CWRUSpectrograms(torch.utils.data.Dataset):
@@ -57,11 +47,9 @@ class CWRUSpectrograms(torch.utils.data.Dataset):
         self, 
         df: pd.DataFrame,
         transform: Callable[[np.ndarray, int], torch.Tensor],
-        target_transform: Callable[[str], torch.Tensor],
     ) -> None:
         self.df = df
         self.transform = transform
-        self.target_transform = target_transform
 
     def __len__(self) -> int:
         return len(self.df)
@@ -80,6 +68,6 @@ class CWRUSpectrograms(torch.utils.data.Dataset):
         signal_sample = signal[signal_begin:signal_end]
         image = self.transform(signal_sample, load)
 
-        target = self.target_transform(fault)
+        target = encode_label(fault)
 
         return image, target

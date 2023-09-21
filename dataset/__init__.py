@@ -1,3 +1,6 @@
 from dataset.dataset import (
-    CWRUSpectrograms, LabelEncoder, create_transform, create_target_transform
+    CWRUSpectrograms, 
+    encode_label, 
+    decode_label, 
+    create_transform,
 )
