@@ -79,13 +79,6 @@ def main() -> None:
         sample_length = 2048 if sampling_rate == '12k' else 8192
         df = create_df(data_files, end, sample_length)
 
-        classes = pd.Series(df.fault.unique())
-        classes.to_csv(
-            f'{csv_root}/{sampling_rate}_{end}_classes.csv',
-            header=False,
-            index=False,
-        )
-
         train_df, test_df, val_df = split_df(df, test_size, val_size)
         train_df.to_csv(
             f'{csv_root}/{sampling_rate}_{end}_train.csv', index=False

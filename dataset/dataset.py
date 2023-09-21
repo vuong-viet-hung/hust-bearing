@@ -7,6 +7,19 @@ import pandas as pd
 import scipy
 
 
+class LabelEncoder:
+
+    classes = ['Normal', 'B', 'IR', 'OR']
+
+    @classmethod
+    def encode(cls, fault: str) -> int:
+        return cls.classes.index(fault)
+    
+    @classmethod
+    def decode(cls, target: int) -> str:
+        return cls.classes[target]
+
+
 def create_transform(
     sampling_rate: int,
     image_size: tuple[int, int]
@@ -20,7 +33,7 @@ def create_transform(
         motor_speed = motor_speeds[load]
         n_fft = sampling_rate * 60 // motor_speed
         image = (
-            torch.stft(signal, n_fft, return_complex=True)
+            torch.stft(signal, n_fft, normalized=True, return_complex=True)
             .unsqueeze(dim=0).abs()
         )
         resize_image = resize(image)
@@ -29,12 +42,10 @@ def create_transform(
     return transform
 
 
-def create_target_transform(
-        classes: pd.DataFrame
-    ) -> Callable[[str], torch.Tensor]:
+def create_target_transform() -> Callable[[str], torch.Tensor]:
 
     def target_transform(fault: str) -> torch.Tensor:
-        target = classes[0].eq(fault).idxmax()
+        target = LabelEncoder.encode(fault)
         return torch.tensor(target, dtype=torch.long)
 
     return target_transform
