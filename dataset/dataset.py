@@ -37,13 +37,11 @@ def create_transform(
 
 
 def create_target_transform(
-        classes_file: str
+        classes: pd.DataFrame
     ) -> Callable[[str], torch.Tensor]:
 
-    classes = pd.read_csv(classes_file, header=None)
-
     def target_transform(fault: str) -> torch.Tensor:
-        target = classes[classes[0] == fault].index[0]
+        target = classes[0].eq(fault).idxmax()
         return torch.tensor(target, dtype=torch.long)
 
     return target_transform
@@ -53,11 +51,11 @@ class CWRUSpectrograms(torch.utils.data.Dataset):
 
     def __init__(
         self, 
-        samples_file: str,
+        df: pd.DataFrame,
         transform: Callable[[np.ndarray, int], torch.Tensor],
         target_transform: Callable[[str], torch.Tensor],
     ) -> None:
-        self.df = pd.read_csv(samples_file)
+        self.df = df
         self.transform = transform
         self.target_transform = target_transform
 
