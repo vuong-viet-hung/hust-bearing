@@ -65,50 +65,30 @@ def main() -> None:
     normal_files = glob.glob(f'{normal_root}/*.mat')
     os.makedirs(csv_root, exist_ok=True)
 
-    # 12K Drive-End
-    fault_root = f'{data_root}/12k_DE'
-    fault_files = glob.glob(f'{fault_root}/*.mat')
-    data_files = normal_files + fault_files
-    df = create_df(data_files, end='DE', sample_length=2048)
+    for sampling_rate, end in zip(['12k', '12k', '48k'], ['DE', 'FE', 'DE']):
 
-    class_dict = {'fault': df.fault.unique()}
-    class_df = pd.DataFrame(class_dict)
-    class_df.to_csv(f'{csv_root}/12k_DE_classes.csv', index=False)
+        fault_root = f'{data_root}/{sampling_rate}_{end}'
+        fault_files = glob.glob(f'{fault_root}/*.mat')
+        data_files = normal_files + fault_files
+        sample_length = 2048 if sampling_rate == '12k' else 8192
+        df = create_df(data_files, end, sample_length)
 
-    train_df, test_df, val_df = split_df(df, test_size, val_size)
-    train_df.to_csv(f'{csv_root}/12k_DE_train.csv', index=False)
-    test_df.to_csv(f'{csv_root}/12k_DE_test.csv', index=False)
-    val_df.to_csv(f'{csv_root}/12k_DE_val.csv', index=False)
+        class_dict = {'fault': df.fault.unique()}
+        class_df = pd.DataFrame(class_dict)
+        class_df.to_csv(
+            f'{csv_root}/{sampling_rate}_{end}_classes.csv', index=False
+        )
 
-    # 12K Fan-End
-    fault_root = f'{data_root}/12k_FE'
-    fault_files = glob.glob(f'{fault_root}/*.mat')
-    data_files = normal_files + fault_files
-    df = create_df(data_files, end='FE', sample_length=2048)
-
-    class_dict = {'fault': df.fault.unique()}
-    class_df = pd.DataFrame(class_dict)
-    class_df.to_csv(f'{csv_root}/12k_FE_classes.csv', index=False)
-
-    train_df, test_df, val_df = split_df(df, test_size, val_size)
-    train_df.to_csv(f'{csv_root}/12k_FE_train.csv', index=False)
-    test_df.to_csv(f'{csv_root}/12k_FE_test.csv', index=False)
-    val_df.to_csv(f'{csv_root}/12k_FE_val.csv', index=False)
-
-    # 48K Drive-End
-    fault_root = f'{data_root}/48k_DE'
-    fault_files = glob.glob(f'{fault_root}/*.mat')
-    data_files = normal_files + fault_files
-    df = create_df(data_files, end='DE', sample_length=8192)
-
-    class_dict = {'fault': df.fault.unique()}
-    class_df = pd.DataFrame(class_dict)
-    class_df.to_csv(f'{csv_root}/48k_DE_classes.csv', index=False)
-
-    train_df, test_df, val_df = split_df(df, test_size, val_size)
-    train_df.to_csv(f'{csv_root}/48k_DE_train.csv', index=False)
-    test_df.to_csv(f'{csv_root}/48k_DE_test.csv', index=False)
-    val_df.to_csv(f'{csv_root}/48k_DE_val.csv', index=False)
+        train_df, test_df, val_df = split_df(df, test_size, val_size)
+        train_df.to_csv(
+            f'{csv_root}/{sampling_rate}_{end}_train.csv', index=False
+        )
+        test_df.to_csv(
+            f'{csv_root}/{sampling_rate}_{end}_test.csv', index=False
+        )
+        val_df.to_csv(
+            f'{csv_root}/{sampling_rate}_{end}_val.csv', index=False
+        )
 
 
 if __name__ == '__main__':
