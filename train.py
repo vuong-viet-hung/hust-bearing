@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 import torch
 import pandas as pd
 
-from dataset import CWRUSpectrograms, create_transform, create_target_transform
+from dataset import (
+    CWRUSpectrograms, create_transform, create_target_transform
+)
 
 
 def plot_samples(
@@ -23,6 +25,7 @@ def plot_samples(
 
 def main() -> None:
     csv_root = 'csv'
+    image_size = (64, 64)
     batch_size = 32
 
     for sampling_rate, end in zip(['12k', '12k', '48k'], ['DE', 'FE', 'DE']):
@@ -39,7 +42,7 @@ def main() -> None:
 
         transform = create_transform(
             sampling_rate=12000 if sampling_rate == '12k' else 48000,
-            image_size=(64, 64)
+            image_size=image_size,
         )
         target_transform = create_target_transform(classes)
 
