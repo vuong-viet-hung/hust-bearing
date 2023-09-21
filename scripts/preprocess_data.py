@@ -69,10 +69,13 @@ def main() -> None:
     fault_root = f'{data_root}/12k_DE'
     fault_files = glob.glob(f'{fault_root}/*.mat')
     data_files = normal_files + fault_files
-
     df = create_df(data_files, end='DE', sample_length=2048)
-    train_df, test_df, val_df = split_df(df, test_size, val_size)
 
+    class_dict = {'fault': df.fault.unique()}
+    class_df = pd.DataFrame(class_dict)
+    class_df.to_csv(f'{csv_root}/12k_DE_classes.csv', index=False)
+
+    train_df, test_df, val_df = split_df(df, test_size, val_size)
     train_df.to_csv(f'{csv_root}/12k_DE_train.csv', index=False)
     test_df.to_csv(f'{csv_root}/12k_DE_test.csv', index=False)
     val_df.to_csv(f'{csv_root}/12k_DE_val.csv', index=False)
@@ -81,10 +84,13 @@ def main() -> None:
     fault_root = f'{data_root}/12k_FE'
     fault_files = glob.glob(f'{fault_root}/*.mat')
     data_files = normal_files + fault_files
-
     df = create_df(data_files, end='FE', sample_length=2048)
-    train_df, test_df, val_df = split_df(df, test_size, val_size)
 
+    class_dict = {'fault': df.fault.unique()}
+    class_df = pd.DataFrame(class_dict)
+    class_df.to_csv(f'{csv_root}/12k_FE_classes.csv', index=False)
+
+    train_df, test_df, val_df = split_df(df, test_size, val_size)
     train_df.to_csv(f'{csv_root}/12k_FE_train.csv', index=False)
     test_df.to_csv(f'{csv_root}/12k_FE_test.csv', index=False)
     val_df.to_csv(f'{csv_root}/12k_FE_val.csv', index=False)
@@ -93,10 +99,13 @@ def main() -> None:
     fault_root = f'{data_root}/48k_DE'
     fault_files = glob.glob(f'{fault_root}/*.mat')
     data_files = normal_files + fault_files
-
     df = create_df(data_files, end='DE', sample_length=8192)
+
+    class_dict = {'fault': df.fault.unique()}
+    class_df = pd.DataFrame(class_dict)
+    class_df.to_csv(f'{csv_root}/48k_DE_classes.csv', index=False)
+
     train_df, test_df, val_df = split_df(df, test_size, val_size)
-    
     train_df.to_csv(f'{csv_root}/48k_DE_train.csv', index=False)
     test_df.to_csv(f'{csv_root}/48k_DE_test.csv', index=False)
     val_df.to_csv(f'{csv_root}/48k_DE_val.csv', index=False)
