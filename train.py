@@ -21,9 +21,9 @@ def plot_samples(
 
     for idx, ax in enumerate(axes.flat):
         image, target = dataset[idx]
-        label = decode_label(target)
+        fault = decode_label(target)
         ax.imshow(image.squeeze())
-        ax.set_title(label)
+        ax.set_title(fault)
 
     fig.savefig(fig_name)
 
