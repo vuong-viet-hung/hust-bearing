@@ -43,10 +43,18 @@ def create_df(data_files, end, sample_length):
         filename = os.path.basename(file)
         match = FILENAME_REGEX.fullmatch(filename)
         fault = match.group(1)
-        fault_diameter = int(match.group(2)) if match.group(2) is not None else None
-        fault_location = int(match.group(3).lstrip('@')) if match.group(3) is not None else None
+        fault_diameter = (
+            int(match.group(2)) 
+            if match.group(2) is not None else None
+        )
+        fault_location = (
+            int(match.group(3).lstrip('@')) 
+            if match.group(3) is not None else None
+        )
         load = int(match.group(4))
-        *_, signal_key = [key for key in data.keys() if key.endswith(f'{end}_time')]
+        *_, signal_key = (
+            [key for key in data.keys() if key.endswith(f'{end}_time')]
+        )
         signal = data[signal_key]
         n_samples = len(signal) // sample_length
 
@@ -98,7 +106,9 @@ def main() -> None:
         sample_length = 2048 if sampling_rate == '12k' else 8192
         df = create_df(data_files, end, sample_length)
 
-        train_df, test_df, val_df = split_df(df, TEST_SIZE, VAL_SIZE, RANDOM_STATE)
+        train_df, test_df, val_df = split_df(
+            df, TEST_SIZE, VAL_SIZE, RANDOM_STATE
+        )
         train_df.to_csv(
             f'{CSV_ROOT}/{sampling_rate}_{end}_train.csv', index=False
         )
