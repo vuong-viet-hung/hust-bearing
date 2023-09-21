@@ -15,6 +15,7 @@ def create_df(data_files, end, sample_length):
         'fault_diameter': [],
         'fault_location': [],
         'load': [],
+        'signal_key': [],
         'signal_begin': [],
         'signal_end': [],
     }
@@ -39,6 +40,7 @@ def create_df(data_files, end, sample_length):
             data_dict['fault_diameter'].append(fault_diameter)
             data_dict['fault_location'].append(fault_location)
             data_dict['load'].append(load)
+            data_dict['signal_key'].append(signal_key)
             data_dict['signal_begin'].append(signal_begin)
             data_dict['signal_end'].append(signal_end)
 
