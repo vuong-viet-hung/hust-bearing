@@ -94,7 +94,7 @@ def main() -> None:
     fault_files = glob.glob(f'{fault_root}/*.mat')
     data_files = normal_files + fault_files
 
-    df = create_df(data_files, end='DE', sample_length=4096)
+    df = create_df(data_files, end='DE', sample_length=8192)
     train_df, test_df, val_df = split_df(df, test_size, val_size)
     
     train_df.to_csv(f'{csv_root}/48k_DE_train.csv', index=False)
