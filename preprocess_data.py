@@ -51,8 +51,12 @@ def create_df(data_files, end, sample_length):
 
 def split_df(df, test_size, val_size):
     eval_size = test_size + val_size
-    train_df, eval_df = train_test_split(df, test_size=eval_size)
-    test_df, val_df = train_test_split(eval_df, test_size=val_size / eval_size)
+    train_df, eval_df = train_test_split(
+        df, test_size=eval_size, stratify=df.fault
+    )
+    test_df, val_df = train_test_split(
+        eval_df, test_size=val_size / eval_size, stratify=eval_df.fault
+    )
     return train_df, test_df, val_df
 
 
