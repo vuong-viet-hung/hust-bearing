@@ -15,21 +15,24 @@ def create_transform(
     motor_speeds = [1797, 1772, 1750, 1730]
 
     def stft(signal: np.ndarray, load: int) -> torch.Tensor:
-        signal = torch.Tensor(signal, dtype=torch.float)
+        signal = torch.tensor(signal, dtype=torch.float)
         motor_speed = motor_speeds[load]
-        n_fft = sampling_rate * 60 / motor_speed
+        n_fft = sampling_rate * 60 // motor_speed
         return (
             torch.stft(signal, n_fft, return_complex=True)
             .unsqueeze(dim=0).abs()
         )
 
-    transform = torchvision.transforms.Compose(
-        [
-            torchvision.transforms.Lambda(stft),
-            torchvision.transforms.Resize(image_size),
-            torchvision.transforms.Normalize(),
-        ]
-    )
+    resize = torchvision.transforms.Resize(image_size, antialias=True)
+
+    normalize = torchvision.transforms.Normalize(mean=0, std=1)
+    
+    def transform(signal: np.ndarray, load: int) -> torch.Tensor:
+        image = stft(signal, load)
+        image = resize(image)
+        image = normalize(image)
+        return image
+
     return transform
 
 
@@ -37,10 +40,10 @@ def create_target_transform(
         classes_file: str
     ) -> Callable[[str], torch.Tensor]:
 
-    classes = pd.read_csv(classes_file).fault
+    classes = pd.read_csv(classes_file, header=None)
 
     def target_transform(fault: str) -> torch.Tensor:
-        target = classes[classes == fault].index[0]
+        target = classes[classes[0] == fault].index[0]
         return torch.tensor(target, dtype=torch.long)
 
     return target_transform
@@ -64,13 +67,14 @@ class CWRUSpectrograms(torch.utils.data.Dataset):
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
 
         sample = self.df.iloc[idx]
-        file = sample['file']
-        fault = sample['fault']
-        load = sample['load']
-        signal_begin = sample['signal_begin']
-        signal_end = sample['signal_end']
+        file = sample.file
+        fault = sample.fault
+        load = sample.load
+        signal_key = sample.signal_key
+        signal_begin = sample.signal_begin
+        signal_end = sample.signal_end
 
-        signal = scipy.io.loadmat(file)
+        signal = scipy.io.loadmat(file)[signal_key].squeeze()
         signal_sample = signal[signal_begin:signal_end]
         image = self.transform(signal_sample, load)
 
