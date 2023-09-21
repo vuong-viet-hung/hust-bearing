@@ -13,25 +13,18 @@ def create_transform(
 ) -> Callable[[np.ndarray, int], torch.Tensor]:
 
     motor_speeds = [1797, 1772, 1750, 1730]
-
-    def stft(signal: np.ndarray, load: int) -> torch.Tensor:
+    resize = torchvision.transforms.Resize(image_size, antialias=True)
+    
+    def transform(signal: np.ndarray, load: int) -> torch.Tensor:
         signal = torch.tensor(signal, dtype=torch.float)
         motor_speed = motor_speeds[load]
         n_fft = sampling_rate * 60 // motor_speed
-        return (
+        image = (
             torch.stft(signal, n_fft, return_complex=True)
             .unsqueeze(dim=0).abs()
         )
-
-    resize = torchvision.transforms.Resize(image_size, antialias=True)
-
-    normalize = torchvision.transforms.Normalize(mean=0, std=1)
-    
-    def transform(signal: np.ndarray, load: int) -> torch.Tensor:
-        image = stft(signal, load)
-        image = resize(image)
-        image = normalize(image)
-        return image
+        resize_image = resize(image)
+        return resize_image
 
     return transform
 
