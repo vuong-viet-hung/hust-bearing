@@ -12,11 +12,12 @@ from dataset import (
 CSV_ROOT = 'csv'
 IMAGE_SIZE = (64, 64)
 BATCH_SIZE = 32
+SAMPLING_RATES = ['12k', '12k', '48k']
+ENDS = ['DE', 'FE', 'DE']
 
 
-def plot_samples(
-    dataset: torch.utils.data.Dataset, fig_name: str
-):
+def plot_samples(dataset: torch.utils.data.Dataset, fig_name: str):
+
     fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(15, 15))
 
     for idx, ax in enumerate(axes.flat):
@@ -30,7 +31,7 @@ def plot_samples(
 
 def main() -> None:
 
-    for sampling_rate, end in zip(['12k', '12k', '48k'], ['DE', 'FE', 'DE']):
+    for sampling_rate, end in zip(SAMPLING_RATES, ENDS):
 
         train_file = f'{CSV_ROOT}/{sampling_rate}_{end}_train.csv'
         test_file = f'{CSV_ROOT}/{sampling_rate}_{end}_test.csv'

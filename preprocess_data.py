@@ -23,6 +23,8 @@ FILENAME_REGEX = re.compile(
 TEST_SIZE = 0.1
 VAL_SIZE = 0.1
 RANDOM_STATE = 42
+SAMPLING_RATES = ['12k', '12k', '48k']
+ENDS = ['DE', 'FE', 'DE']
 
 
 def create_df(data_files, end, sample_length):
@@ -98,7 +100,7 @@ def main() -> None:
     normal_files = glob.glob(f'{normal_root}/*.mat')
     os.makedirs(CSV_ROOT, exist_ok=True)
 
-    for sampling_rate, end in zip(['12k', '12k', '48k'], ['DE', 'FE', 'DE']):
+    for sampling_rate, end in zip(SAMPLING_RATES, ENDS):
 
         fault_root = f'{DATA_ROOT}/{sampling_rate}_{end}'
         fault_files = glob.glob(f'{fault_root}/*.mat')
