@@ -4,7 +4,7 @@ import urllib.request
 import zipfile
 
 
-DATA_URL = 'https://github.com/vuong-viet-hung/CWRU-1/archive/refs/heads/master.zip'
+DATA_URL = 'https://github.com/XiongMeijing/CWRU-1/archive/refs/heads/master.zip'
 COMPRESSED_FILE = 'CWRU-1-master.zip'
 REPO = 'CWRU-1-master'
 
