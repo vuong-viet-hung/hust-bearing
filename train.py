@@ -7,7 +7,7 @@ from dataset import (
     decode_label, 
     create_transform,
 )
-from model import LeNet5
+from models import AlexNet, LeNet5
 from training import train
 
 
@@ -36,6 +36,8 @@ def main() -> None:
 
     for sampling_rate, end in zip(sampling_rates, ends):
 
+        print(f'Training for {sampling_rate}_{end}')
+
         train_file = f'{CSV_ROOT}/{sampling_rate}_{end}_train.csv'
         val_file = f'{CSV_ROOT}/{sampling_rate}_{end}_val.csv'
 
@@ -56,7 +58,7 @@ def main() -> None:
         val_dl = torch.utils.data.DataLoader(val_ds, BATCH_SIZE, shuffle=True)
         
         model = LeNet5(
-            out_features=3 if sampling_rate == '48k' else 4,
+            n_classes=3 if sampling_rate == '48k' else 4,
         )
 
         train(
