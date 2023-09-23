@@ -7,6 +7,7 @@ from dataset import (
     decode_label, 
     create_transform,
 )
+from model import LeNet5
 from training import train
 
 
@@ -53,6 +54,12 @@ def main() -> None:
 
         train_dl = torch.utils.data.DataLoader(train_ds, BATCH_SIZE, shuffle=True)
         val_dl = torch.utils.data.DataLoader(val_ds, BATCH_SIZE, shuffle=True)
+        
+        model = LeNet5(
+            out_features=3 if sampling_rate == '48k' else 4,
+        )
+
+        train(model, train_dl, val_dl, n_epochs=100, lr=1e-5)
 
 
 if __name__ == '__main__':
