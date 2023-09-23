@@ -35,11 +35,9 @@ def main() -> None:
     for sampling_rate, end in zip(sampling_rates, ends):
 
         train_file = f'{CSV_ROOT}/{sampling_rate}_{end}_train.csv'
-        test_file = f'{CSV_ROOT}/{sampling_rate}_{end}_test.csv'
         val_file = f'{CSV_ROOT}/{sampling_rate}_{end}_val.csv'
 
         train_df = pd.read_csv(train_file)
-        test_df = pd.read_csv(test_file)
         val_df = pd.read_csv(val_file)
 
         transform = create_transform(
@@ -48,13 +46,11 @@ def main() -> None:
         )
 
         train_ds = CWRUSpectrograms(train_df, transform)
-        test_ds = CWRUSpectrograms(test_df, transform)
         val_ds = CWRUSpectrograms(val_df, transform)
 
         plot_samples(train_ds, f'plots/{sampling_rate}_{end}.png')
 
         train_dl = torch.utils.data.DataLoader(train_ds, BATCH_SIZE, shuffle=True)
-        test_dl = torch.utils.data.DataLoader(test_ds, BATCH_SIZE, shuffle=True)
         val_dl = torch.utils.data.DataLoader(val_ds, BATCH_SIZE, shuffle=True)
 
 
