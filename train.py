@@ -65,7 +65,7 @@ def main() -> None:
             val_dl, 
             n_epochs=100, 
             lr=1e-5,
-            saved_model=f'{sampling_rate}_{end}.pth'
+            saved_model=f'weights/{sampling_rate}_{end}.pth'
         )
 
 

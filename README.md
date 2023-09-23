@@ -33,4 +33,8 @@ python preprocess_data.py
 ```
 The command creates *csv/* directory which contains signal samples' metadata. For example, a csv file for valid samples belonging to the **12k_FE** subset is named as such: *12k_FE_val.csv*.
 ## Train the model
+Train and save trained model
+```
+python train.py
+```
 ## Evaluate and inference
