@@ -7,6 +7,7 @@ from dataset import (
     decode_label, 
     create_transform,
 )
+from training import train
 
 
 CSV_ROOT = 'csv'
