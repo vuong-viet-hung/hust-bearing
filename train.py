@@ -59,7 +59,14 @@ def main() -> None:
             out_features=3 if sampling_rate == '48k' else 4,
         )
 
-        train(model, train_dl, val_dl, n_epochs=100, lr=1e-5)
+        train(
+            model, 
+            train_dl, 
+            val_dl, 
+            n_epochs=100, 
+            lr=1e-5,
+            saved_model=f'{sampling_rate}_{end}.pth'
+        )
 
 
 if __name__ == '__main__':

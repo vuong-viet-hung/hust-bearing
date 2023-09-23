@@ -8,6 +8,7 @@ def train(
     val_dl: torch.utils.data.DataLoader,
     n_epochs: int,
     lr: float,
+    saved_model: str,
 ) -> None:
     model.cuda()
     loss_fn = torch.nn.CrossEntropyLoss()
@@ -46,8 +47,8 @@ def train(
             train_loss = train_loss_sum / n_train_samples
             train_accuracy = n_train_accurate_samples / n_train_samples
             train_dl.set_description(
-                f'train loss: {train_loss:.4f}, ' 
-                f'train accuracy: {train_accuracy:.4f}'
+                f'train loss: {train_loss:.6f}, ' 
+                f'train accuracy: {train_accuracy:.6f}'
             )
 
         val_dl = tqdm(val_dl)
@@ -75,11 +76,13 @@ def train(
             val_loss = val_loss_sum / n_val_samples
             val_accuracy = n_val_accurate_samples / n_val_samples
             val_dl.set_description(
-                f'val loss: {val_loss:.4f}, '
-                f'val accuracy: {val_accuracy:.4f}'
+                f'val loss: {val_loss:.6f}, '
+                f'val accuracy: {val_accuracy:.6f}'
             )
 
         n_epochs.set_description(
-            f'train loss: {val_loss:.4f}, train accuracy: {train_accuracy:.4f} | '
-            f'val loss: {val_loss:.4f}, val accuracyy: {val_accuracy:.4f}'
+            f'train loss: {val_loss:.6f}, train accuracy: {train_accuracy:.6f} | '
+            f'val loss: {val_loss:.6f}, val accuracyy: {val_accuracy:.6}'
         )
+
+        torch.save(model.state_dict(), saved_model)
