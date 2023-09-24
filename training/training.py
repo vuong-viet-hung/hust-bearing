@@ -15,7 +15,7 @@ def train(
     trainable_params = (
         [param for param in model.parameters() if param.requires_grad]
     )
-    optimizer = torch.optim.Adam(trainable_params, lr=lr)
+    optimizer = torch.optim.Adam(trainable_params, lr)
     n_epochs = trange(n_epochs)
     
     for epoch in n_epochs:
