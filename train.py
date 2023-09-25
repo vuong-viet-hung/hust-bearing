@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import torch
+import os
 import pandas as pd
 
 from dataset import (
@@ -52,6 +53,7 @@ def main() -> None:
         train_ds = CWRUSpectrograms(train_df, transform)
         val_ds = CWRUSpectrograms(val_df, transform)
 
+        os.makedirs('plots', exist_ok=True)
         plot_samples(train_ds, f'plots/{sampling_rate}_{end}.png')
 
         train_dl = torch.utils.data.DataLoader(train_ds, BATCH_SIZE, shuffle=True)
