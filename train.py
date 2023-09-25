@@ -63,6 +63,7 @@ def main() -> None:
             n_classes=3 if sampling_rate == '48k' else 4,
         )
 
+        os.makedirs('weights', exist_ok=True)
         train(
             model, 
             train_dl, 
