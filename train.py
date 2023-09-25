@@ -1,6 +1,7 @@
+import os
+
 import matplotlib.pyplot as plt
 import torch
-import os
 import pandas as pd
 
 from dataset import (
