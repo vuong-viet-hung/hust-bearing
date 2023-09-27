@@ -64,8 +64,8 @@ def train(
             batch_size, *_ = image_batch.shape
 
             model.eval()
-            output_batch = model(image_batch)
             with torch.no_grad():
+                output_batch = model(image_batch)
                 batch_loss = loss_fn(output_batch, target_batch)
 
             n_val_samples += batch_size
