@@ -95,5 +95,4 @@ def train(
             continue
 
         min_loss = val_loss
-        print('Saving model...')
         torch.save(model.state_dict(), saved_model)
