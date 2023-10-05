@@ -17,7 +17,7 @@ def train(
     )
     optimizer = torch.optim.Adam(trainable_params, lr)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
-    n_epochs = trange(n_epochs, leave=False)
+    n_epochs = trange(n_epochs)
     min_loss = float('inf')
 
     for epoch in n_epochs:
