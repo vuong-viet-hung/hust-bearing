@@ -90,4 +90,7 @@ def train(
             f'lr: {current_lr:.4e}'
         )
 
-        torch.save(model.state_dict(), saved_model)
+        min_loss = float('inf')
+        if val_loss < min_loss:
+            min_loss = val_loss
+            torch.save(model.state_dict(), saved_model)
