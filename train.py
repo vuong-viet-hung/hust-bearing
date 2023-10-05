@@ -69,7 +69,7 @@ def main() -> None:
             model,
             train_dl,
             val_dl,
-            n_epochs=30,
+            n_epochs=10,
             lr=1e-3,
             saved_model=f'weights/{sampling_rate}_{end}.pth'
         )
