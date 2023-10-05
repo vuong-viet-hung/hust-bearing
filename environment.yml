@@ -7,8 +7,6 @@ dependencies:
   - pytorch::pytorch=2.0.1
   - pytorch::torchvision=0.15.2
   - pytorch::pytorch-cuda=11.8
-  - conda-forge::ipykernel=6.25.2
-  - conda-forge::ipywidgets=8.1.1
   - conda-forge::matplotlib=3.8.0
   - conda-forge::numpy=1.26.0
   - conda-forge::pandas=2.1.0
