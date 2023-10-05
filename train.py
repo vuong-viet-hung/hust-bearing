@@ -15,7 +15,7 @@ from training import train
 
 CSV_ROOT = 'csv'
 IMAGE_SIZE = (64, 64)
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 
 
 def plot_samples(dataset: torch.utils.data.Dataset, fig_name: str):
