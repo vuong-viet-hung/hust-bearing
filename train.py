@@ -9,7 +9,7 @@ from dataset import (
     decode_label, 
     create_transform,
 )
-from models import AlexNet, LeNet5
+from models import LeNet5
 from training import train
 
 

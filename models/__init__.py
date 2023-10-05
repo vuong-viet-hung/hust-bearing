@@ -1,1 +1,1 @@
-from models.models import AlexNet, LeNet5
+from models.models import LeNet5
