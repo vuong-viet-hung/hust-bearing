@@ -8,7 +8,7 @@ from dataset import create_transform
 
 CSV_ROOT = 'csv'
 SPECTROGRAM_ROOT = 'spectrograms'
-IMAGE_SIZE = (32, 32)
+IMAGE_SIZE = (64, 64)
 
 
 def main() -> None:
