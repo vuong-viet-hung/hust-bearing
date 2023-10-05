@@ -1,5 +1,5 @@
-import torch
-from tqdm import tqdm, trange
+import torch.utils.data
+from tqdm.auto import tqdm, trange
 
 
 def train(
@@ -17,11 +17,12 @@ def train(
     )
     optimizer = torch.optim.Adam(trainable_params, lr)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.75)
-    n_epochs = trange(n_epochs)
-    
+    n_epochs = trange(n_epochs, leave=False)
+    min_loss = float('inf')
+
     for epoch in n_epochs:
 
-        train_dl = tqdm(train_dl)
+        train_dl = tqdm(train_dl, leave=False)
         train_loss = 0.0
         train_loss_sum = 0.0
         train_accuracy = 0.0
@@ -52,7 +53,7 @@ def train(
                 f'train accuracy: {train_accuracy:.4f}'
             )
 
-        val_dl = tqdm(val_dl)
+        val_dl = tqdm(val_dl, leave=False)
         val_loss = 0.0
         val_loss_sum = 0.0
         val_accuracy = 0.0
@@ -90,7 +91,9 @@ def train(
             f'lr: {current_lr:.4e}'
         )
 
-        min_loss = float('inf')
-        if val_loss < min_loss:
-            min_loss = val_loss
-            torch.save(model.state_dict(), saved_model)
+        if val_loss >= min_loss:
+            continue
+
+        min_loss = val_loss
+        print('Saving model...')
+        torch.save(model.state_dict(), saved_model)
