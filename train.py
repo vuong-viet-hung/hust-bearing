@@ -66,11 +66,11 @@ def main() -> None:
 
         os.makedirs('weights', exist_ok=True)
         train(
-            model, 
-            train_dl, 
-            val_dl, 
-            n_epochs=100, 
-            lr=1e-5,
+            model,
+            train_dl,
+            val_dl,
+            n_epochs=10,
+            lr=1e-3,
             saved_model=f'weights/{sampling_rate}_{end}.pth'
         )
 

@@ -22,7 +22,7 @@ FILENAME_REGEX = re.compile(
 )
 TEST_SIZE = 0.1
 VAL_SIZE = 0.1
-RANDOM_STATE = 42
+RANDOM_STATE = 21
 
 
 def create_df(data_files, end, sample_length):
@@ -106,7 +106,7 @@ def main() -> None:
         fault_root = f'{DATA_ROOT}/{sampling_rate}_{end}'
         fault_files = glob.glob(f'{fault_root}/*.mat')
         data_files = normal_files + fault_files
-        sample_length = 2048 if sampling_rate == '12k' else 8192
+        sample_length = 1024 if sampling_rate == '12k' else 4096
         df = create_df(data_files, end, sample_length)
 
         train_df, test_df, val_df = split_df(

@@ -16,6 +16,7 @@ def train(
         [param for param in model.parameters() if param.requires_grad]
     )
     optimizer = torch.optim.Adam(trainable_params, lr)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.75)
     n_epochs = trange(n_epochs)
     
     for epoch in n_epochs:
@@ -80,9 +81,13 @@ def train(
                 f'val accuracy: {val_accuracy:.4f}'
             )
 
+        *_, current_lr = scheduler.get_last_lr()
+        scheduler.step()
+
         n_epochs.set_description(
             f'train loss: {train_loss:.4f}, train accuracy: {train_accuracy:.4f} | '
-            f'val loss: {val_loss:.4f}, val accuracyy: {val_accuracy:.4f}'
+            f'val loss: {val_loss:.4f}, val accuracyy: {val_accuracy:.4f} |'
+            f'lr: {current_lr:.4e}'
         )
 
         torch.save(model.state_dict(), saved_model)
