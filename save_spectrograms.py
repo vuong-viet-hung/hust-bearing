@@ -1,32 +1,14 @@
-import matplotlib.pyplot as plt
-import torch
 import os
 import pandas as pd
 import scipy
 import torchvision
 
-from dataset import (
-    decode_label, 
-    create_transform,
-)
+from dataset import create_transform
 
 
 CSV_ROOT = 'csv'
 SPECTROGRAM_ROOT = 'spectrograms'
 IMAGE_SIZE = (64, 64)
-
-
-def plot_samples(dataset: torch.utils.data.Dataset, fig_name: str):
-
-    fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(15, 15))
-
-    for idx, ax in enumerate(axes.flat):
-        image, target = dataset[idx]
-        fault = decode_label(target)
-        ax.imshow(image.squeeze())
-        ax.set_title(fault)
-
-    fig.savefig(fig_name)
 
 
 def main() -> None:
