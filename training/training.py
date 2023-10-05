@@ -87,7 +87,7 @@ def train(
 
         n_epochs.set_description(
             f'train loss: {train_loss:.4f}, train accuracy: {train_accuracy:.4f} | '
-            f'val loss: {val_loss:.4f}, val accuracyy: {val_accuracy:.4f} |'
+            f'val loss: {val_loss:.4f}, val accuracyy: {val_accuracy:.4f} | '
             f'lr: {current_lr:.4e}'
         )
 
