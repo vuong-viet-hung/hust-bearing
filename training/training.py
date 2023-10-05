@@ -16,7 +16,7 @@ def train(
         [param for param in model.parameters() if param.requires_grad]
     )
     optimizer = torch.optim.Adam(trainable_params, lr)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.75)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
     n_epochs = trange(n_epochs, leave=False)
     min_loss = float('inf')
 
