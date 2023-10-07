@@ -1,6 +1,6 @@
 from typing import Callable
 
-import torch
+import torch.utils.data
 import torchvision
 import numpy as np
 import pandas as pd
