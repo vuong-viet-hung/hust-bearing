@@ -22,7 +22,7 @@ def train(
 
     for epoch in n_epochs:
 
-        train_dl = tqdm(train_dl, leave=False)
+        train_dl = tqdm(train_dl)
         train_loss = 0.0
         train_loss_sum = 0.0
         train_accuracy = 0.0
@@ -53,7 +53,7 @@ def train(
                 f'train accuracy: {train_accuracy:.4f}'
             )
 
-        val_dl = tqdm(val_dl, leave=False)
+        val_dl = tqdm(val_dl)
         val_loss = 0.0
         val_loss_sum = 0.0
         val_accuracy = 0.0
