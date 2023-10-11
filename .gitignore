@@ -5,4 +5,5 @@ data/
 plots/
 spectrograms/
 weights/
+save_spectrograms.py
 spectrograms.zip
