@@ -1,1 +1,1 @@
-from model.models import LeNet5
+from model.model import LeNet5
