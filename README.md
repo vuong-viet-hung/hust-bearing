@@ -37,7 +37,7 @@ Train and save trained model.
 ```
 python train.py
 ```
-## Evaluation and inference (Work in Progress)
+## Evaluation and inference (Work in progress)
 Download pretrained weights to the *weights/* directory.
 ```
 python download_weights.py
