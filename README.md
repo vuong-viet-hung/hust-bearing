@@ -16,7 +16,7 @@ After ```bearing``` environment is created, activate the environment
 ```
 conda activate bearing
 ```
-The environment must be activated before any ```python``` commands are excecuted. \
+The environment must be activated before any ```python``` commands are executed. \
 Deactivate the environment upon finish.
 ```
 conda deactivate
@@ -37,8 +37,9 @@ Train and save trained model.
 ```
 python train.py
 ```
-## Evaluate and inference
+## Evaluation and inference (Work in Progress)
 Download pretrained weights to the *weights/* directory.
 ```
 python download_weights.py
 ```
+TODO: Create evaluation and inference scripts.
