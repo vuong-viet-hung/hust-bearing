@@ -7,7 +7,7 @@ Classification of bearing faults from accelerometer's signal using data from CWR
 - ```conda``` package manager
 - Dependencies listed in ```environment.yml```
 ## Create and activate the environment
-The project is managed using ```conda```. To have it installed, follow the [this](https://docs.conda.io/projects/miniconda/en/latest/) instruction. \
+This project is managed using ```conda```. To have it installed, follow the [this](https://docs.conda.io/projects/miniconda/en/latest/) instruction. \
 Create the ```bearing``` project environment and and install dependencies.
 ```
 conda env create -f environment.yml
@@ -17,7 +17,7 @@ After ```bearing``` environment is created, activate the environment
 conda activate bearing
 ```
 The environment must be activated before any ```python``` commands are executed. \
-Deactivate the environment upon finish.
+Deactivate the environment upon completion.
 ```
 conda deactivate
 ```
