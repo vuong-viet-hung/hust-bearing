@@ -3,7 +3,7 @@
 Classification of bearing faults from accelerometer's signal using data from CWRU Bearing Dataset. Faults are classified into one of four classes: **Normal**, **B** (Ball), **IR** (Inner-Race), **OR** (Outer-Race). Classification is done for individual subsets: **12k_DE**, **12k_FE** and **48k_DE**.
 ## Prerequisites
 - Linux operating system
-- A CUDA-capable GPU
+- CUDA-capable GPU
 - ```conda``` package manager
 - Dependencies listed in ```environment.yml```
 ## Create and activate the environment
