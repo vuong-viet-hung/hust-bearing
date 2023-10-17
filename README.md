@@ -12,7 +12,7 @@ Create the ```bearing``` project environment and and install dependencies.
 ```
 conda env create -f environment.yml
 ```
-After ```bearing``` environment is created, activate the environment
+After ```bearing``` environment is created, activate the environment.
 ```
 conda activate bearing
 ```
