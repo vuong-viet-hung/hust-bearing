@@ -2,7 +2,4 @@
 __pycache__/
 data/
 models/
-plots/
-spectrograms/
-save_spectrograms.py
-spectrograms.zip
+reports/
