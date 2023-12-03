@@ -1,4 +1,4 @@
-from dataset.dataset import (
+from src.data.cwru.dataset import (
     CWRUSpectrograms, 
     encode_label, 
     decode_label, 
