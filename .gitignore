@@ -1,9 +1,8 @@
 .idea/
 __pycache__/
-csv/
 data/
+models/
 plots/
 spectrograms/
-weights/
 save_spectrograms.py
 spectrograms.zip
