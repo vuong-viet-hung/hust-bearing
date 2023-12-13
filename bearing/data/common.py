@@ -45,9 +45,19 @@ def get_transform() -> Transform:
 
 
 class DataPipeline(ABC):
-    def __init__(self, data_dir: Path | str, data_file_cls: type[DataFile] = DataFile) -> None:
+    def __init__(
+        self,
+        data_dir: Path | str,
+        segment_len: int,
+        nperseg: int,
+        noverlap: int,
+        data_file_cls: type[DataFile] = DataFile,
+    ) -> None:
         self.data_dir = Path(data_dir)
         self.data_file_cls = data_file_cls
+        self.segment_len = segment_len
+        self.nperseg = nperseg
+        self.noverlap = noverlap
         self.train_ds: Dataset | None = None
         self.valid_ds: Dataset | None = None
         self.test_ds: Dataset | None = None
@@ -115,8 +125,14 @@ def register_data_pipeline(dataset_name: str) -> Callable[[D], D]:
     return decorator
 
 
-def get_data_pipeline(dataset_name: str, data_dir: Path | str) -> DataPipeline:
+def get_data_pipeline(
+    dataset_name: str,
+    data_dir: Path | str,
+    segment_len: int,
+    nperseg: int,
+    noverlap: int,
+) -> DataPipeline:
     if dataset_name not in data_pipeline_registry:
         raise ValueError(f"Unregistered dataset: {dataset_name!s}")
     data_pipeline_cls = data_pipeline_registry[dataset_name]
-    return data_pipeline_cls(data_dir)
+    return data_pipeline_cls(data_dir, segment_len, nperseg, noverlap)
