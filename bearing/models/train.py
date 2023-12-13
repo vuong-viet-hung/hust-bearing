@@ -27,7 +27,7 @@ def main() -> None:
         data_root_dir.mkdir(exist_ok=True)
         args.data_dir = data_root_dir / args.dataset_name
 
-    data_pipeline = get_data_pipeline(args.dataset_name, args.data_dir)
+    data_pipeline = get_data_pipeline(args.dataset_name, args.data_dir, args.segment_len, args.nperseg, args.noverlap)
     (
         data_pipeline
         .download_data()

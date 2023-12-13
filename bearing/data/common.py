@@ -1,8 +1,7 @@
 import itertools
-import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Callable, TypeVar, Self
+from typing import Callable, Literal, TypeVar, Self
 
 import numpy as np
 import pandas as pd
@@ -58,35 +57,31 @@ class DataPipeline(ABC):
         self.segment_len = segment_len
         self.nperseg = nperseg
         self.noverlap = noverlap
-        self.train_ds: Dataset | None = None
-        self.valid_ds: Dataset | None = None
-        self.test_ds: Dataset | None = None
-        self.train_dl: DataLoader | None = None
-        self.valid_dl: DataLoader | None = None
-        self.test_dl: DataLoader | None = None
+        subset = Literal["train", "valid", "test"]
+        self.datasets: dict[subset, Dataset] = {}
+        self.data_loaders: dict[subset, DataLoader] = {}
 
     def build_datasets(self) -> Self:
         data_frame = self.get_data_frame()
         loader = self.get_loader()
         transform = get_transform()
         dataset = ConcatDataset([self.data_file_cls(row, loader, transform) for _, row in data_frame.iterrows()])
-        self.train_ds, self.valid_ds, self.test_ds = random_split(dataset, [0.8, 0.1, 0.1])
+        self.datasets["train"], self.datasets["valid"], self.datasets["test"] = random_split(dataset, [0.8, 0.1, 0.1])
         return self
 
     def build_data_loaders(self, batch_size: int) -> Self:
-        if any(dataset is None for dataset in [self.train_ds, self.valid_ds, self.test_ds]):
+        if {"train", "valid", "test"}.symmetric_difference(self.datasets.keys()):
             raise ValueError("Datasets haven't been built.")
-        self.train_dl = DataLoader(self.train_ds, batch_size, shuffle=True)
-        self.valid_dl = DataLoader(self.valid_ds, batch_size)
-        self.test_dl = DataLoader(self.test_ds, batch_size)
+        self.data_loaders["train"] = DataLoader(self.datasets["train"], batch_size, shuffle=True)
+        self.data_loaders["valid"] = DataLoader(self.datasets["valid"], batch_size)
+        self.data_loaders["test"] = DataLoader(self.datasets["test"], batch_size)
         return self
 
     def validate_data_loaders(self) -> Self:
-        if any(data_loader is None for data_loader in [self.train_dl, self.valid_dl, self.test_dl]):
-            raise ValueError("Data loaders haven't been built.")
-        data_loader = itertools.chain(self.train_dl, self.valid_dl, self.test_dl)
+        if {"train", "valid", "test"}.symmetric_difference(self.data_loaders.keys()):
+            raise ValueError("Datasets haven't been built.")
         # Iterate over data loaders for sanity check
-        for _ in data_loader:
+        for _ in itertools.chain(*self.data_loaders.values()):
             pass
         return self
 
