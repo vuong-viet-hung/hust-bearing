@@ -12,7 +12,7 @@ import pandas as pd
 import scipy
 from sklearn.preprocessing import LabelEncoder
 
-from bearing.data.common import DataPipeline, Loader, register_data_pipeline
+from bearing.data.common import DataPipeline, DataFile, get_transform, register_data_pipeline
 
 
 def load_signal(data_file: str | Path) -> np.ndarray:
@@ -70,5 +70,14 @@ class CWRUPipeline(DataPipeline):
         df["label"] = encoder.fit_transform(df.fault)
         return df
 
-    def get_loader(self) -> Loader:
-        return load_signal
+    def get_data_file(
+        self,
+        data_file: Path | str,
+        label: int,
+        segment_len: int,
+        nperseg: int,
+        noverlap: int
+    ) -> DataFile:
+        loader = load_signal
+        transform = get_transform()
+        return DataFile(data_file, label, segment_len, nperseg, noverlap, loader, transform)

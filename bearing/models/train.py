@@ -27,12 +27,11 @@ def main() -> None:
         data_root_dir.mkdir(exist_ok=True)
         args.data_dir = data_root_dir / args.dataset_name
 
-    data_pipeline_cls = get_data_pipeline(args.dataset_name)
-    data_pipeline = data_pipeline_cls(args.data_dir, args.segment_len, args.nperseg, args.noverlap)
+    data_pipeline = get_data_pipeline(args.dataset_name, args.data_dir)
     (
         data_pipeline
         .download_data()
-        .build_datasets()
+        .build_datasets(args.segment_len, args.nperseg, args.noverlap)
         .build_data_loaders(args.batch_size)
         .validate_data_loaders()
     )
