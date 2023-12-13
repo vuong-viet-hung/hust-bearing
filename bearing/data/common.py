@@ -55,15 +55,12 @@ class DataPipeline(ABC):
         self.valid_dl: DataLoader | None = None
         self.test_dl: DataLoader | None = None
 
-    def build_datasets(self, train_load: str) -> Self:
-        df = self.get_data_frame()
-        train_df = df[df.load == train_load]
-        test_df = df[df.load != train_load]
+    def build_datasets(self) -> Self:
+        data_frame = self.get_data_frame()
         loader = self.get_loader()
         transform = get_transform()
-        train_ds = ConcatDataset([self.data_file_cls(row, loader, transform) for _, row in train_df.iterrows()])
-        self.test_ds = ConcatDataset([self.data_file_cls(row, loader, transform) for _, row in test_df.iterrows()])
-        self.train_ds, self.valid_ds = random_split(train_ds, [0.8, 0.2])
+        dataset = ConcatDataset([self.data_file_cls(row, loader, transform) for _, row in data_frame.iterrows()])
+        self.train_ds, self.valid_ds, self.test_ds = random_split(dataset, [0.8, 0.1, 0.1])
         logging.debug(f"Number of train samples: {len(self.train_ds)}")
         logging.debug(f"Number of valid samples: {len(self.valid_ds)}")
         logging.debug(f"Number of test samples: {len(self.test_ds)}")
