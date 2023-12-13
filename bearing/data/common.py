@@ -112,8 +112,6 @@ class DataPipeline(ABC):
         for image_batch, _ in self.data_loaders[subset]:
             pixel_min = min(pixel_min, image_batch.min())
             pixel_max = max(pixel_max, image_batch.max())
-        logging.debug(f"Pixel min: {pixel_min}")
-        logging.debug(f"Pixel max: {pixel_max}")
         pixel_mean = (pixel_max + pixel_min) / 2
         pixel_std = (pixel_max - pixel_min) / 2
         normalizer = torchvision.transforms.Normalize(pixel_mean, pixel_std)
@@ -123,11 +121,6 @@ class DataPipeline(ABC):
     def validate_data_loaders(self) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.data_loaders.keys()):
             raise ValueError("Datasets haven't been built.")
-        image_batch, label_batch = next(iter(self.data_loaders["train"]))
-        logging.debug(f"Image batch shape: {image_batch.shape}")
-        logging.debug(f"Label batch shape: {label_batch.shape}")
-        logging.debug(f"Sample image: {image_batch[0]}")
-        logging.debug(f"Sample labels: {label_batch}")
         # Iterate over data loaders for sanity check
         for _ in itertools.chain(*self.data_loaders.values()):
             pass
