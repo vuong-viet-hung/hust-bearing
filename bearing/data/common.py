@@ -17,12 +17,24 @@ Transform = Callable[[np.ndarray], torch.Tensor]
 
 
 class DataFile(Dataset):
-    def __init__(self, data_row: pd.Series, loader: Loader, transform: Transform) -> None:
-        self.data_file: Path = data_row.file
+    def __init__(
+        self,
+        data_file: Path | str,
+        label: int,
+        segment_len: int,
+        nperseg: int,
+        noverlap: int,
+        loader: Loader,
+        transform: Transform,
+    ) -> None:
+        self.data_file = data_file
+        self.label = torch.tensor(label)
+        self.segment_len = segment_len
+        self.nperseg = nperseg
+        self.noverlap = noverlap
         self.loader = loader
         self.transform = transform
         self.segment_len = 2048
-        self.label = torch.tensor(data_row.label)
         signal = loader(self.data_file)
         self.num_segments = len(signal) // self.segment_len
 
@@ -32,8 +44,8 @@ class DataFile(Dataset):
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         signal = self.loader(self.data_file)
         segment = signal[idx * self.segment_len: (idx + 1) * self.segment_len]
-        *_, spectrogram = scipy.signal.stft(segment, nperseg=512, noverlap=384)
-        image = self.transform(np.abs(spectrogram))
+        *_, spectrogram = scipy.signal.spectrogram(segment, nperseg=self.nperseg, noverlap=self.noverlap)
+        image = self.transform(spectrogram)
         return image, self.label
 
 
@@ -44,28 +56,21 @@ def get_transform() -> Transform:
 
 
 class DataPipeline(ABC):
-    def __init__(
-        self,
-        data_dir: Path | str,
-        segment_len: int,
-        nperseg: int,
-        noverlap: int,
-        data_file_cls: type[DataFile] = DataFile,
-    ) -> None:
+    def __init__(self, data_dir: Path | str) -> None:
         self.data_dir = Path(data_dir)
-        self.data_file_cls = data_file_cls
-        self.segment_len = segment_len
-        self.nperseg = nperseg
-        self.noverlap = noverlap
         subset = Literal["train", "valid", "test"]
         self.datasets: dict[subset, Dataset] = {}
         self.data_loaders: dict[subset, DataLoader] = {}
 
-    def build_datasets(self) -> Self:
+    def build_datasets(self, segment_len: int, nperseg: int, noverlap: int) -> Self:
         data_frame = self.get_data_frame()
-        loader = self.get_loader()
-        transform = get_transform()
-        dataset = ConcatDataset([self.data_file_cls(row, loader, transform) for _, row in data_frame.iterrows()])
+        data_rows = (row for _, row in data_frame.iterrows())
+        data_files = (row.file for row in data_rows)
+        labels = (row.label for row in data_rows)
+        data_files = [
+            self.get_data_file(file, label, segment_len, nperseg, noverlap) for file, label in zip(data_files, labels)
+        ]
+        dataset = ConcatDataset(data_files)
         self.datasets["train"], self.datasets["valid"], self.datasets["test"] = random_split(dataset, [0.8, 0.1, 0.1])
         return self
 
@@ -94,7 +99,14 @@ class DataPipeline(ABC):
         pass
 
     @abstractmethod
-    def get_loader(self) -> Loader:
+    def get_data_file(
+        self,
+        data_file: Path | str,
+        label: int,
+        segment_len: int,
+        nperseg: int,
+        noverlap: int
+    ) -> DataFile:
         pass
 
 
@@ -109,7 +121,8 @@ def register_data_pipeline(dataset_name: str) -> Callable[[D], D]:
     return decorator
 
 
-def get_data_pipeline(dataset_name: str) -> type[DataPipeline]:
+def get_data_pipeline(dataset_name: str, data_dir: str | Path) -> DataPipeline:
     if dataset_name not in data_pipeline_registry:
         raise ValueError(f"Unregistered dataset: {dataset_name!s}")
-    return data_pipeline_registry[dataset_name]
+    data_pipeline_cls = data_pipeline_registry[dataset_name]
+    return data_pipeline_cls(data_dir)
