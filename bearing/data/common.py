@@ -109,14 +109,7 @@ def register_data_pipeline(dataset_name: str) -> Callable[[D], D]:
     return decorator
 
 
-def get_data_pipeline(
-    dataset_name: str,
-    data_dir: Path | str,
-    segment_len: int,
-    nperseg: int,
-    noverlap: int,
-) -> DataPipeline:
+def get_data_pipeline(dataset_name: str) -> type[DataPipeline]:
     if dataset_name not in data_pipeline_registry:
         raise ValueError(f"Unregistered dataset: {dataset_name!s}")
-    data_pipeline_cls = data_pipeline_registry[dataset_name]
-    return data_pipeline_cls(data_dir, segment_len, nperseg, noverlap)
+    return data_pipeline_registry[dataset_name]
