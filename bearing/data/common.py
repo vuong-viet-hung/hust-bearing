@@ -1,4 +1,5 @@
 import itertools
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable, Literal, TypeVar, Self
@@ -6,10 +7,10 @@ from typing import Callable, Literal, TypeVar, Self
 import numpy as np
 import pandas as pd
 import scipy
+import torchvision
 from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
 
 import torch
-import torchvision
 
 
 Loader = Callable[[Path | str], np.ndarray]
@@ -44,23 +45,36 @@ class DataFile(Dataset):
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         signal = self.loader(self.data_file)
         segment = signal[idx * self.segment_len: (idx + 1) * self.segment_len]
-        *_, spectrogram = scipy.signal.spectrogram(segment, nperseg=self.nperseg, noverlap=self.noverlap)
-        image = self.transform(spectrogram)
+        *_, stft = scipy.signal.stft(segment, nperseg=self.nperseg, noverlap=self.noverlap)
+        amplitude = np.abs(stft)
+        db = 20 * np.log10(amplitude)
+        image = self.transform(db)
         return image, self.label
 
 
-def get_transform() -> Transform:
-    return torchvision.transforms.Compose(
-        [torchvision.transforms.ToTensor(), torchvision.transforms.Resize((64, 64), antialias=None)]
-    )
+class NormalizeDataset(Dataset):
+    def __init__(self, dataset: Dataset, normalizer: Callable[[torch.Tensor], torch.Tensor]) -> None:
+        self.dataset = dataset
+        self.normalizer = normalizer
+
+    def __len__(self) -> int:
+        # noinspection PyTypeChecker
+        return len(self.dataset)
+
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+        image, label = self.dataset[idx]
+        image = self.normalizer(image)
+        return image, label
+
+
+Subset = Literal["train", "valid", "test"]
 
 
 class DataPipeline(ABC):
     def __init__(self, data_dir: Path | str) -> None:
         self.data_dir = Path(data_dir)
-        subset = Literal["train", "valid", "test"]
-        self.datasets: dict[subset, Dataset] = {}
-        self.data_loaders: dict[subset, DataLoader] = {}
+        self.datasets: dict[Subset, Dataset] = {}
+        self.data_loaders: dict[Subset, DataLoader] = {}
 
     def build_datasets(self, segment_len: int, nperseg: int, noverlap: int) -> Self:
         data_frame = self.get_data_frame()
@@ -82,9 +96,38 @@ class DataPipeline(ABC):
         self.data_loaders["test"] = DataLoader(self.datasets["test"], batch_size)
         return self
 
+    def normalize_data_loaders(self) -> Self:
+        if {"train", "valid", "test"}.symmetric_difference(self.data_loaders.keys()):
+            raise ValueError("Data loaders haven't been built.")
+        self.normalize_data_loader("train")
+        self.normalize_data_loader("valid")
+        self.normalize_data_loader("test")
+        return self
+
+    def normalize_data_loader(self, subset: Subset) -> None:
+        image_batch, _ = next(iter(self.data_loaders[subset]))
+        batch_size = image_batch.shape[0]
+        pixel_min = float("inf")
+        pixel_max = float("-inf")
+        for image_batch, _ in self.data_loaders[subset]:
+            pixel_min = min(pixel_min, image_batch.min())
+            pixel_max = max(pixel_max, image_batch.max())
+        logging.debug(f"Pixel min: {pixel_min}")
+        logging.debug(f"Pixel max: {pixel_max}")
+        pixel_mean = (pixel_max + pixel_min) / 2
+        pixel_std = (pixel_max - pixel_min) / 2
+        normalizer = torchvision.transforms.Normalize(pixel_mean, pixel_std)
+        self.datasets[subset] = NormalizeDataset(self.datasets[subset], normalizer)
+        self.data_loaders[subset] = DataLoader(self.datasets[subset], batch_size)
+
     def validate_data_loaders(self) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.data_loaders.keys()):
             raise ValueError("Datasets haven't been built.")
+        image_batch, label_batch = next(iter(self.data_loaders["train"]))
+        logging.debug(f"Image batch shape: {image_batch.shape}")
+        logging.debug(f"Label batch shape: {label_batch.shape}")
+        logging.debug(f"Sample image: {image_batch[0]}")
+        logging.debug(f"Sample labels: {label_batch}")
         # Iterate over data loaders for sanity check
         for _ in itertools.chain(*self.data_loaders.values()):
             pass

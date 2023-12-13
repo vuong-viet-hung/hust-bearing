@@ -10,9 +10,10 @@ from typing import Self
 import numpy as np
 import pandas as pd
 import scipy
+import torchvision
 from sklearn.preprocessing import LabelEncoder
 
-from bearing.data.common import DataPipeline, DataFile, get_transform, register_data_pipeline
+from bearing.data.common import DataPipeline, DataFile, register_data_pipeline
 
 
 def load_signal(data_file: str | Path) -> np.ndarray:
@@ -79,5 +80,7 @@ class CWRUPipeline(DataPipeline):
         noverlap: int
     ) -> DataFile:
         loader = load_signal
-        transform = get_transform()
+        transform = torchvision.transforms.Compose(
+            [torchvision.transforms.ToTensor(), torchvision.transforms.Resize((64, 64), antialias=None)]
+        )
         return DataFile(data_file, label, segment_len, nperseg, noverlap, loader, transform)
