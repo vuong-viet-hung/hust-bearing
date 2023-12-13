@@ -1,2 +1,1 @@
-from bearing.data.common import make_data_pipeline, split_df
-import bearing.data.cwru
+from bearing.data.common import DataPipeline, get_data_pipeline
