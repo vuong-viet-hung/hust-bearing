@@ -25,10 +25,10 @@ def load_signal(data_file: str | Path) -> np.ndarray:
 class CWRUPipeline(DataPipeline):
     def download_data(self) -> Self:
         if self.data_dir.exists():
-            logging.info(f"CWRU dataset has already been downloaded to '{self.data_dir}'.")
+            logging.info(f"'cwru' dataset is already downloaded to '{self.data_dir}'.")
             return self
 
-        logging.info(f"Downloading CWRU dataset to '{self.data_dir}'...")
+        logging.info(f"Downloading 'cwru' dataset to '{self.data_dir}'...")
         download_url = "https://github.com/XiongMeijing/CWRU-1/archive/refs/heads/master.zip"
         download_zip_file = Path("CWRU-1-master.zip")
         download_extract_dir = Path("CWRU-1-master")

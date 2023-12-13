@@ -71,9 +71,6 @@ class DataPipeline(ABC):
         transform = get_transform()
         dataset = ConcatDataset([self.data_file_cls(row, loader, transform) for _, row in data_frame.iterrows()])
         self.train_ds, self.valid_ds, self.test_ds = random_split(dataset, [0.8, 0.1, 0.1])
-        logging.debug(f"Number of train samples: {len(self.train_ds)}")
-        logging.debug(f"Number of valid samples: {len(self.valid_ds)}")
-        logging.debug(f"Number of test samples: {len(self.test_ds)}")
         return self
 
     def build_data_loaders(self, batch_size: int) -> Self:
@@ -82,21 +79,13 @@ class DataPipeline(ABC):
         self.train_dl = DataLoader(self.train_ds, batch_size, shuffle=True)
         self.valid_dl = DataLoader(self.valid_ds, batch_size)
         self.test_dl = DataLoader(self.test_ds, batch_size)
-        logging.debug(f"Number of train batches: {len(self.train_dl)}")
-        logging.debug(f"Number of valid batches: {len(self.valid_dl)}")
-        logging.debug(f"Number of test batches: {len(self.test_dl)}")
         return self
 
     def validate_data_loaders(self) -> Self:
         if any(data_loader is None for data_loader in [self.train_dl, self.valid_dl, self.test_dl]):
             raise ValueError("Data loaders haven't been built.")
         data_loader = itertools.chain(self.train_dl, self.valid_dl, self.test_dl)
-        image_batch, label_batch = next(iter(data_loader))
-        logging.debug(f"Image batch's shape: {image_batch.shape}")
-        logging.debug(f"Sample image: {image_batch[0]}")
-        logging.debug(f"Label batch's shape: {label_batch.shape}")
-        logging.debug(f"Sample label batch: {label_batch}")
-        logging.info("Iterate over data loaders for sanity check...")
+        # Iterate over data loaders for sanity check
         for _ in data_loader:
             pass
         return self
