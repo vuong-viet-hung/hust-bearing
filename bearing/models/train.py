@@ -2,36 +2,37 @@ import logging
 from argparse import ArgumentParser
 from pathlib import Path
 
+import torch
+
 from bearing.data import get_data_pipeline
 
 
 def main() -> None:
     parser = ArgumentParser()
-    parser.add_argument("--data-dir", type=Path)
     parser.add_argument("--dataset-name", type=str)
+    parser.add_argument("--data-dir", type=Path)
     parser.add_argument("--batch-size", type=int)
-    parser.add_argument("--logging-level", type=str, default="info")
+    parser.add_argument("--segment_len", type=int, default=2048)
+    parser.add_argument("--nperseg", type=int, default=256)
+    parser.add_argument("--noverlap", type=int, default=192)
     parser.add_argument("--seed", type=int, default=21)
+    parser.add_argument("--logging-level", type=str, default="info")
     args = parser.parse_args()
 
-    data_dir: Path | None = args.data_dir
-    dataset_name: str = args.dataset_name
-    batch_size: int = args.batch_size
-    logging_level: str = args.logging_level
+    torch.manual_seed(args.seed)
+    logging.basicConfig(level=getattr(logging, args.logging_level.upper()), format="%(message)s")
 
-    logging.basicConfig(level=getattr(logging, logging_level.upper()), format="%(message)s")
-
-    if data_dir is None:
+    if args.data_dir is None:
         data_root_dir = Path("data")
         data_root_dir.mkdir(exist_ok=True)
-        data_dir = data_root_dir / dataset_name
+        args.data_dir = data_root_dir / args.dataset_name
 
-    data_pipeline = get_data_pipeline(dataset_name, data_dir)
+    data_pipeline = get_data_pipeline(args.dataset_name, args.data_dir)
     (
         data_pipeline
         .download_data()
         .build_datasets()
-        .build_data_loaders(batch_size)
+        .build_data_loaders(args.batch_size)
         .validate_data_loaders()
     )
 
