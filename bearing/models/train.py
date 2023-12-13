@@ -1,3 +1,4 @@
+import logging
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -6,19 +7,36 @@ from bearing.data import get_data_pipeline
 
 def main() -> None:
     parser = ArgumentParser()
-    parser.add_argument('--dataset-name', type=str)
-    parser.add_argument('--data-dir', type=Path)
-    parser.add_argument('--seed', type=int, default=21)
+    parser.add_argument("--data-dir", type=Path)
+    parser.add_argument("--dataset-name", type=str)
+    parser.add_argument("--train-load", type=str)
+    parser.add_argument("--batch-size", type=int)
+    parser.add_argument("--logging-level", type=str, default="info")
+    parser.add_argument("--seed", type=int, default=21)
     args = parser.parse_args()
 
-    if args.data_dir is None:
-        data_root_dir = Path('data')
+    data_dir: Path | None = args.data_dir
+    dataset_name: str = args.dataset_name
+    train_load: str = args.train_load
+    batch_size: int = args.batch_size
+    logging_level: str = args.logging_level.upper()
+
+    logging.basicConfig(level=getattr(logging, logging_level), format="%(message)s")
+
+    if data_dir is None:
+        data_root_dir = Path("data")
         data_root_dir.mkdir(exist_ok=True)
-        args.data_dir = data_root_dir / args.dataset
+        data_dir = data_root_dir / dataset_name
 
-    data_pipeline = get_data_pipeline(args.dataset_name)
-    data_pipeline.get_data_loaders(args.data_dir, args.batch_size)
+    data_pipeline = get_data_pipeline(dataset_name, data_dir)
+    (
+        data_pipeline
+        .download_data()
+        .build_datasets(train_load)
+        .build_data_loaders(batch_size)
+        .validate_data_loaders()
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
