@@ -64,9 +64,9 @@ class DataPipeline(ABC):
         train_ds = ConcatDataset([self.data_file_cls(row, loader, transform) for _, row in train_df.iterrows()])
         self.test_ds = ConcatDataset([self.data_file_cls(row, loader, transform) for _, row in test_df.iterrows()])
         self.train_ds, self.valid_ds = random_split(train_ds, [0.8, 0.2])
-        logging.info(f"Number of train samples: {len(self.train_ds)}")
-        logging.info(f"Number of valid samples: {len(self.valid_ds)}")
-        logging.info(f"Number of test samples: {len(self.test_ds)}")
+        logging.debug(f"Number of train samples: {len(self.train_ds)}")
+        logging.debug(f"Number of valid samples: {len(self.valid_ds)}")
+        logging.debug(f"Number of test samples: {len(self.test_ds)}")
         return self
 
     def build_data_loaders(self, batch_size: int) -> Self:
@@ -75,9 +75,9 @@ class DataPipeline(ABC):
         self.train_dl = DataLoader(self.train_ds, batch_size, shuffle=True)
         self.valid_dl = DataLoader(self.valid_ds, batch_size)
         self.test_dl = DataLoader(self.test_ds, batch_size)
-        logging.info(f"Number of train batches: {len(self.train_dl)}")
-        logging.info(f"Number of valid batches: {len(self.valid_dl)}")
-        logging.info(f"Number of test batches: {len(self.test_dl)}")
+        logging.debug(f"Number of train batches: {len(self.train_dl)}")
+        logging.debug(f"Number of valid batches: {len(self.valid_dl)}")
+        logging.debug(f"Number of test batches: {len(self.test_dl)}")
         return self
 
     def validate_data_loaders(self) -> Self:
