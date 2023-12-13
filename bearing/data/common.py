@@ -1,4 +1,3 @@
-import itertools
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable, Literal, TypeVar, Self
@@ -116,14 +115,6 @@ class DataPipeline(ABC):
         normalizer = torchvision.transforms.Normalize(pixel_mean, pixel_std)
         self.datasets[subset] = NormalizeDataset(self.datasets[subset], normalizer)
         self.data_loaders[subset] = DataLoader(self.datasets[subset], batch_size)
-
-    def validate_data_loaders(self) -> Self:
-        if {"train", "valid", "test"}.symmetric_difference(self.data_loaders.keys()):
-            raise ValueError("Datasets haven't been built.")
-        # Iterate over data loaders for sanity check
-        for _ in itertools.chain(*self.data_loaders.values()):
-            pass
-        return self
 
     @abstractmethod
     def download_data(self) -> Self:

@@ -34,7 +34,6 @@ def main() -> None:
         .build_datasets(args.segment_len, args.nperseg, args.noverlap)
         .build_data_loaders(args.batch_size)
         .normalize_data_loaders()
-        .validate_data_loaders()
     )
 
 
