@@ -92,7 +92,7 @@ class DataPipeline(ABC):
         self.data_loaders: dict[Subset, DataLoader] = {}
 
     def build_dataset(self, seg_length: int, win_length: int, hop_length: int) -> Self:
-        data_frame = self.get_data_frame()
+        df = self.get_data_frame()
         get_data_file = functools.partial(
             DataFile,
             seg_length=seg_length,
@@ -102,7 +102,7 @@ class DataPipeline(ABC):
             transform=get_transform(),
         )
         self.dataset = ConcatDataset(
-            [get_data_file(row.file, row.label) for _, row in data_frame.iterrows()]
+            [get_data_file(row.file, row.label) for _, row in df.iterrows()]
         )
         return self
 
