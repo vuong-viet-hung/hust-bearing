@@ -87,7 +87,7 @@ class DataPipeline(ABC):
         self.data_dir = Path(data_dir)
         self.batch_size = batch_size
         self.dataset: Dataset = ConcatDataset([])
-        self.datasets: dict[Subset, Dataset] = {}
+        self.subsets: dict[Subset, Dataset] = {}
         self.data_loaders: dict[Subset, DataLoader] = {}
 
     def build_dataset(self, seg_length: int, win_length: int, hop_length: int) -> Self:
@@ -110,14 +110,14 @@ class DataPipeline(ABC):
         if len(self.dataset) == 0:  # type: ignore
             raise ValueError("Dataset hasn't been built.")
         (
-            self.datasets["train"],
-            self.datasets["valid"],
-            self.datasets["test"],
+            self.subsets["train"],
+            self.subsets["valid"],
+            self.subsets["test"],
         ) = random_split(self.dataset, split_fractions)
         return self
 
     def normalize_datasets(self) -> Self:
-        if {"train", "valid", "test"}.symmetric_difference(self.datasets.keys()):
+        if {"train", "valid", "test"}.symmetric_difference(self.subsets.keys()):
             raise ValueError("Dataset hasn't been built or split.")
         self.normalize_dataset("train")
         self.normalize_dataset("valid")
@@ -127,7 +127,7 @@ class DataPipeline(ABC):
     def normalize_dataset(self, subset: Subset) -> None:
         pixel_min = float("inf")
         pixel_max = float("-inf")
-        data_loader = DataLoader(self.datasets[subset], self.batch_size)
+        data_loader = DataLoader(self.subsets[subset], self.batch_size)
 
         for image_batch, _ in data_loader:
             pixel_min = min(pixel_min, image_batch.min())
@@ -136,16 +136,16 @@ class DataPipeline(ABC):
         loc = (pixel_max + pixel_min) / 2
         scale = (pixel_max - pixel_min) / 2
         normalizer = torchvision.transforms.Normalize(loc, scale)
-        self.datasets[subset] = NormalizeDataset(self.datasets[subset], normalizer)
+        self.subsets[subset] = NormalizeDataset(self.subsets[subset], normalizer)
 
     def build_data_loaders(self) -> Self:
-        if {"train", "valid", "test"}.symmetric_difference(self.datasets.keys()):
+        if {"train", "valid", "test"}.symmetric_difference(self.subsets.keys()):
             raise ValueError("Dataset hasn't been built or split.")
         self.data_loaders["train"] = DataLoader(
-            self.datasets["train"], self.batch_size, shuffle=True
+            self.subsets["train"], self.batch_size, shuffle=True
         )
-        self.data_loaders["valid"] = DataLoader(self.datasets["valid"], self.batch_size)
-        self.data_loaders["test"] = DataLoader(self.datasets["test"], self.batch_size)
+        self.data_loaders["valid"] = DataLoader(self.subsets["valid"], self.batch_size)
+        self.data_loaders["test"] = DataLoader(self.subsets["test"], self.batch_size)
         return self
 
     @abstractmethod
