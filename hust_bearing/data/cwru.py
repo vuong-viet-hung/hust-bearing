@@ -12,7 +12,7 @@ import scipy
 import torchvision
 from sklearn.preprocessing import LabelEncoder
 
-from bearing.data.common import DataPipeline, DataFile, register_data_pipeline
+from hust_bearing.data.common import DataPipeline, DataFile, register_data_pipeline
 
 
 def load_signal(data_file: str | Path) -> np.ndarray:
