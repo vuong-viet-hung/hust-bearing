@@ -1,4 +1,7 @@
 # HUST Bearing (Work in Progress)
+<p align="center">
+    <img src="assests/mandevices_logo.png">
+</p>
 ## Introduction
 This repository contains researches dedicated to classification of bearing fault based on vibarational signal's short-time Fourier transform (STFT), using deep neural network to identify the type of defect.
 The project provides an intuitive CLI interface for proposed algorithms.
