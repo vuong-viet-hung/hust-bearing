@@ -31,11 +31,11 @@ def main() -> None:
 
     data_pipeline = get_data_pipeline(args.dataset_name, args.batch_size)
     (
-        data_pipeline.download_data(args.data_dir)
-        .build_dataset(args.seg_length, args.win_length, args.hop_length)
-        .split_dataset((0.8, 0.1, 0.1))
-        .normalize_datasets()
-        .build_data_loaders()
+        data_pipeline.p_download_data(args.data_dir)
+        .p_build_dataset(args.seg_length, args.win_length, args.hop_length)
+        .p_split_dataset((0.8, 0.1, 0.1))
+        .p_normalize_datasets()
+        .p_build_data_loaders()
     )
 
 
