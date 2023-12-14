@@ -183,12 +183,12 @@ class DataPipeline(ABC):
         pass
 
 
-D = TypeVar("D", bound=type[DataPipeline])
+P = TypeVar("P", bound=type[DataPipeline])
 data_pipeline_registry: dict[str, type[DataPipeline]] = {}
 
 
-def register_data_pipeline(dataset_name: str) -> Callable[[D], D]:
-    def decorator(data_pipeline_cls: D) -> D:
+def register_data_pipeline(dataset_name: str) -> Callable[[P], P]:
+    def decorator(data_pipeline_cls: P) -> P:
         data_pipeline_registry[dataset_name] = data_pipeline_cls
         return data_pipeline_cls
 
