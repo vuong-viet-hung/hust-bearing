@@ -58,7 +58,7 @@ class CWRUPipeline(DataPipeline):
         encoder = LabelEncoder()
         return encoder.fit_transform(faults)
 
-    def load_signal(self, data_file: str | Path) -> np.ndarray:
+    def load_signal(self, data_file: Path | str) -> np.ndarray:
         data = scipy.io.loadmat(str(data_file))
         *_, signal_key = (key for key in data.keys() if key.endswith("DE_time"))
         return data[signal_key].astype(np.float32).squeeze()
