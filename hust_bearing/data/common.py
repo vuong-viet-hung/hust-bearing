@@ -34,7 +34,6 @@ class DataFile(Dataset):
         self.noverlap = noverlap
         self.loader = loader
         self.transform = transform
-        self.segment_len = 2048
         signal = loader(self.data_file)
         self.num_segments = len(signal) // self.segment_len
 
