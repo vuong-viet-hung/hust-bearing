@@ -4,10 +4,10 @@ import re
 import urllib.request
 import zipfile
 from pathlib import Path
+from typing import Sequence
 from typing_extensions import Self
 
 import numpy as np
-import pandas as pd
 import scipy
 from sklearn.preprocessing import LabelEncoder
 
@@ -37,11 +37,12 @@ class CWRUPipeline(DataPipeline):
         shutil.rmtree(download_extract_dir)
         return self
 
-    def get_data_frame(self) -> pd.DataFrame:
+    def get_data_files(self) -> list[Path]:
         normal_data_files = list((self.data_dir / "Normal").glob("*.mat"))
         fault_data_files = list((self.data_dir / "12k_DE").glob("*.mat"))
-        data_files = normal_data_files + fault_data_files
-        df = pd.DataFrame(data_files, columns=["file"])
+        return normal_data_files + fault_data_files
+
+    def get_labels(self, data_files: Sequence[Path | str]) -> np.ndarray:
         file_regex = re.compile(
             r"""
             ([a-zA-Z]+)  # Fault
@@ -53,17 +54,9 @@ class CWRUPipeline(DataPipeline):
             """,
             re.VERBOSE,
         )
-        df["match"] = df.file.map(lambda file: file_regex.match(file.name))
-        df["fault"] = df.match.map(lambda match: match.group(1))
-        df["fault_size"] = df.match.map(lambda match: match.group(2))
-        df["fault_location"] = df.match.map(lambda match: match.group(3))
-        df["load"] = df.match.map(lambda match: match.group(4))
-        df.drop(columns=["match"], inplace=True)
-        df["sample_rate"] = 12_000
-        df["rpm"] = df.load.map({"0": 1797, "1": 1772, "2": 1750, "3": 1730})
+        faults = [file_regex.fullmatch(str(file.name)).group(1) for file in data_files]  # type: ignore
         encoder = LabelEncoder()
-        df["label"] = encoder.fit_transform(df.fault)
-        return df
+        return encoder.fit_transform(faults)
 
     def load_signal(self, data_file: str | Path) -> np.ndarray:
         data = scipy.io.loadmat(str(data_file))

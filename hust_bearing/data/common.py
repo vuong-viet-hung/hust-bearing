@@ -1,11 +1,10 @@
 import functools
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Callable, Literal, TypeVar
+from typing import Callable, Literal, Sequence, TypeVar
 from typing_extensions import Self
 
 import numpy as np
-import pandas as pd
 import scipy
 import torchvision
 from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
@@ -26,7 +25,7 @@ def get_transform() -> Transform:
     )
 
 
-class DataFile(Dataset):
+class SegmentSTFTs(Dataset):
     def __init__(
         self,
         data_file: Path | str,
@@ -92,9 +91,10 @@ class DataPipeline(ABC):
         self.data_loaders: dict[Subset, DataLoader] = {}
 
     def build_dataset(self, seg_length: int, win_length: int, hop_length: int) -> Self:
-        df = self.get_data_frame()
-        get_data_file = functools.partial(
-            DataFile,
+        data_files = self.get_data_files()
+        labels = self.get_labels(data_files)
+        get_segment_stfts = functools.partial(
+            SegmentSTFTs,
             seg_length=seg_length,
             win_length=win_length,
             hop_length=hop_length,
@@ -102,7 +102,7 @@ class DataPipeline(ABC):
             transform=get_transform(),
         )
         self.dataset = ConcatDataset(
-            [get_data_file(row.file, row.label) for _, row in df.iterrows()]
+            [get_segment_stfts(file, label) for file, label in zip(data_files, labels)]
         )
         return self
 
@@ -153,7 +153,11 @@ class DataPipeline(ABC):
         pass
 
     @abstractmethod
-    def get_data_frame(self) -> pd.DataFrame:
+    def get_data_files(self) -> list[Path]:
+        pass
+
+    @abstractmethod
+    def get_labels(self, data_files: Sequence[Path | str]) -> np.ndarray:
         pass
 
     @abstractmethod
@@ -174,7 +178,7 @@ def register_data_pipeline(dataset_name: str) -> Callable[[D], D]:
 
 
 def get_data_pipeline(
-    dataset_name: str, data_dir: str | Path, batch_size: int
+    dataset_name: str, data_dir: Path | str, batch_size: int
 ) -> DataPipeline:
     if dataset_name not in data_pipeline_registry:
         raise ValueError(f"Unregistered dataset: '{dataset_name}'")
