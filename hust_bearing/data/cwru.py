@@ -42,7 +42,7 @@ class CWRUPipeline(DataPipeline):
             (\d+)  # Load
             \.mat
             """,
-            Path(data_file).name,
+            data_file.name,
             re.VERBOSE,
         ).group(1)
 
