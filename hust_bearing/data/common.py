@@ -1,12 +1,13 @@
 import functools
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Callable, Literal, Sequence, TypeVar
+from typing import Callable, Literal, TypeVar
 from typing_extensions import Self
 
 import numpy as np
 import scipy
 import torchvision
+from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
 
 import torch
@@ -86,13 +87,14 @@ class DataPipeline(ABC):
     def __init__(self, data_dir: Path | str, batch_size: int) -> None:
         self.data_dir = Path(data_dir)
         self.batch_size = batch_size
-        self.dataset: Dataset = ConcatDataset([])
+        self.dataset: Dataset | None = None
         self.subsets: dict[Subset, Dataset] = {}
         self.data_loaders: dict[Subset, DataLoader] = {}
 
     def build_dataset(self, seg_length: int, win_length: int, hop_length: int) -> Self:
-        data_files = self.get_data_files()
-        labels = self.get_labels(data_files)
+        data_files = self.list_data_files()
+        encoder = LabelEncoder()
+        labels = encoder.fit_transform([self.get_label(file) for file in data_files])
         get_segment_stfts = functools.partial(
             SegmentSTFTs,
             seg_length=seg_length,
@@ -107,7 +109,7 @@ class DataPipeline(ABC):
         return self
 
     def split_dataset(self, split_fractions: tuple[float, float, float]) -> Self:
-        if len(self.dataset) == 0:  # type: ignore
+        if self.dataset is None:
             raise ValueError("Dataset hasn't been built.")
         (
             self.subsets["train"],
@@ -153,11 +155,11 @@ class DataPipeline(ABC):
         pass
 
     @abstractmethod
-    def get_data_files(self) -> list[Path]:
+    def list_data_files(self) -> list[Path]:
         pass
 
     @abstractmethod
-    def get_labels(self, data_files: Sequence[Path | str]) -> np.ndarray:
+    def get_label(self, data_file: Path | str) -> str:
         pass
 
     @abstractmethod

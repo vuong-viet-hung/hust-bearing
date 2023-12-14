@@ -4,18 +4,28 @@ import re
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Sequence
 from typing_extensions import Self
 
 import numpy as np
 import scipy
-from sklearn.preprocessing import LabelEncoder
 
 from hust_bearing.data.common import DataPipeline, register_data_pipeline
 
 
 @register_data_pipeline("cwru")
 class CWRUPipeline(DataPipeline):
+    file_regex = re.compile(
+        r"""
+        ([a-zA-Z]+)  # Fault
+        (\d{3})?  # Fault size
+        (@\d+)?  # Fault location
+        _
+        (\d+)  # Load
+        \.mat
+        """,
+        re.VERBOSE,
+    )
+
     def download_data(self) -> Self:
         if self.data_dir.exists():
             logging.info(f"'cwru' dataset is already downloaded to '{self.data_dir}'.")
@@ -37,26 +47,13 @@ class CWRUPipeline(DataPipeline):
         shutil.rmtree(download_extract_dir)
         return self
 
-    def get_data_files(self) -> list[Path]:
+    def list_data_files(self) -> list[Path]:
         normal_data_files = list((self.data_dir / "Normal").glob("*.mat"))
         fault_data_files = list((self.data_dir / "12k_DE").glob("*.mat"))
         return normal_data_files + fault_data_files
 
-    def get_labels(self, data_files: Sequence[Path | str]) -> np.ndarray:
-        file_regex = re.compile(
-            r"""
-            ([a-zA-Z]+)  # Fault
-            (\d{3})?  # Fault size
-            (@\d+)?  # Fault location
-            _
-            (\d+)  # Load
-            \.mat
-            """,
-            re.VERBOSE,
-        )
-        faults = [file_regex.fullmatch(str(file.name)).group(1) for file in data_files]  # type: ignore
-        encoder = LabelEncoder()
-        return encoder.fit_transform(faults)
+    def get_label(self, data_file: Path | str) -> str:
+        return self.file_regex.fullmatch(Path(data_file).name).group(1)  # type: ignore
 
     def load_signal(self, data_file: Path | str) -> np.ndarray:
         data = scipy.io.loadmat(str(data_file))
