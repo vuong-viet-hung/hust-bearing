@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "bearing"
+name = "hust-bearing"
 version = "0.1.0"
 description = ""
 authors = ["vuong-viet-hung <vuongviethung156@gmail.com>"]
