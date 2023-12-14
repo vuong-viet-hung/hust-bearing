@@ -86,7 +86,7 @@ class DataPipeline(ABC):
     def __init__(self, data_dir: Path | str, batch_size: int) -> None:
         self.data_dir = Path(data_dir)
         self.batch_size = batch_size
-        self.dataset: Dataset | None = None
+        self.dataset: Dataset = ConcatDataset([])
         self.datasets: dict[Subset, Dataset] = {}
         self.data_loaders: dict[Subset, DataLoader] = {}
 
@@ -107,7 +107,7 @@ class DataPipeline(ABC):
         return self
 
     def split_dataset(self, split_fractions: tuple[float, float, float]) -> Self:
-        if self.dataset is None:
+        if len(self.dataset) == 0:  # type: ignore
             raise ValueError("Dataset hasn't been built.")
         (
             self.datasets["train"],
