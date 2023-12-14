@@ -48,19 +48,19 @@ class CWRUPipeline(DataPipeline):
             (\d{3})?  # Fault size
             (@\d+)?  # Fault location
             _
-            (\d+)  # Load
+            (\d+)  # Load (HP)
             \.mat
             """,
             re.VERBOSE,
         )
-        df["sample_rate"] = 12_000
         df["match"] = df.file.map(lambda file: file_regex.match(file.name))
         df["fault"] = df.match.map(lambda match: match.group(1))
         df["fault_size"] = df.match.map(lambda match: match.group(2))
         df["fault_location"] = df.match.map(lambda match: match.group(3))
-        df["load"] = df.match.map(lambda match: match.group(4))
+        df["hp"] = df.match.map(lambda match: int(match.group(4)))
         df.drop(columns=["match"], inplace=True)
-        df["rpm"] = df.load.map({"0": 1797, "1": 1772, "2": 1750, "3": 1730})
+        df["sample_rate"] = 12_000
+        df["rpm"] = df.hp.map({0: 1797, 1: 1772, 2: 1750, 3: 1730})
         encoder = LabelEncoder()
         df["label"] = encoder.fit_transform(df.fault)
         return df
