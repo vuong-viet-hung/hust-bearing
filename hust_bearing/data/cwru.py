@@ -14,18 +14,6 @@ from hust_bearing.data.common import DataPipeline, register_data_pipeline
 
 @register_data_pipeline("cwru")
 class CWRUPipeline(DataPipeline):
-    file_regex = re.compile(
-        r"""
-        ([a-zA-Z]+)  # Fault
-        (\d{3})?  # Fault size
-        (@\d+)?  # Fault location
-        _
-        (\d+)  # Load
-        \.mat
-        """,
-        re.VERBOSE,
-    )
-
     def download_data(self) -> Self:
         if self.data_dir.exists():
             logging.info(f"'cwru' dataset is already downloaded to '{self.data_dir}'.")
@@ -53,7 +41,18 @@ class CWRUPipeline(DataPipeline):
         return normal_data_files + fault_data_files
 
     def get_label(self, data_file: Path | str) -> str:
-        return self.file_regex.fullmatch(Path(data_file).name).group(1)  # type: ignore
+        return re.fullmatch(
+            r"""
+            ([a-zA-Z]+)  # Fault
+            (\d{3})?  # Fault size
+            (@\d+)?  # Fault location
+            _
+            (\d+)  # Load
+            \.mat
+            """,
+            Path(data_file).name,
+            re.VERBOSE,
+        ).group(1)  # type: ignore
 
     def load_signal(self, data_file: Path | str) -> np.ndarray:
         data = scipy.io.loadmat(str(data_file))
