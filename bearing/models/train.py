@@ -20,7 +20,9 @@ def main() -> None:
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
-    logging.basicConfig(level=getattr(logging, args.logging_level.upper()), format="%(message)s")
+    logging.basicConfig(
+        level=getattr(logging, args.logging_level.upper()), format="%(message)s"
+    )
 
     if args.data_dir is None:
         data_root_dir = Path("data")
@@ -29,8 +31,7 @@ def main() -> None:
 
     data_pipeline = get_data_pipeline(args.dataset_name, args.data_dir)
     (
-        data_pipeline
-        .download_data()
+        data_pipeline.download_data()
         .build_datasets(args.segment_len, args.nperseg, args.noverlap)
         .build_data_loaders(args.batch_size)
         .normalize_data_loaders()

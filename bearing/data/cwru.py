@@ -1,5 +1,4 @@
 import logging
-import itertools
 import shutil
 import re
 import urllib.request
@@ -30,7 +29,9 @@ class CWRUPipeline(DataPipeline):
             return self
 
         logging.info(f"Downloading 'cwru' dataset to '{self.data_dir}'...")
-        download_url = "https://github.com/XiongMeijing/CWRU-1/archive/refs/heads/master.zip"
+        download_url = (
+            "https://github.com/XiongMeijing/CWRU-1/archive/refs/heads/master.zip"
+        )
         download_zip_file = Path("CWRU-1-master.zip")
         download_extract_dir = Path("CWRU-1-master")
         urllib.request.urlretrieve(download_url, download_zip_file)
@@ -44,9 +45,9 @@ class CWRUPipeline(DataPipeline):
         return self
 
     def get_data_frame(self) -> pd.DataFrame:
-        normal_data_files = (self.data_dir / "Normal").glob("*.mat")
-        fault_data_files = (self.data_dir / "12k_DE").glob("*.mat")
-        data_files = itertools.chain(normal_data_files, fault_data_files)
+        normal_data_files = list((self.data_dir / "Normal").glob("*.mat"))
+        fault_data_files = list((self.data_dir / "12k_DE").glob("*.mat"))
+        data_files = normal_data_files + fault_data_files
         df = pd.DataFrame(data_files, columns=["file"])
         file_regex = re.compile(
             r"""
@@ -77,10 +78,15 @@ class CWRUPipeline(DataPipeline):
         label: int,
         segment_len: int,
         nperseg: int,
-        noverlap: int
+        noverlap: int,
     ) -> DataFile:
         loader = load_signal
         transform = torchvision.transforms.Compose(
-            [torchvision.transforms.ToTensor(), torchvision.transforms.Resize((64, 64), antialias=None)]
+            [
+                torchvision.transforms.ToTensor(),
+                torchvision.transforms.Resize((64, 64), antialias=None),
+            ]
         )
-        return DataFile(data_file, label, segment_len, nperseg, noverlap, loader, transform)
+        return DataFile(
+            data_file, label, segment_len, nperseg, noverlap, loader, transform
+        )

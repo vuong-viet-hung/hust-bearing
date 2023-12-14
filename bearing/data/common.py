@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Callable, Literal, TypeVar, Self
+from typing import Callable, Literal, Self, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -42,8 +42,10 @@ class DataFile(Dataset):
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         signal = self.loader(self.data_file)
-        segment = signal[idx * self.segment_len: (idx + 1) * self.segment_len]
-        *_, stft = scipy.signal.stft(segment, nperseg=self.nperseg, noverlap=self.noverlap)
+        segment = signal[idx * self.segment_len : (idx + 1) * self.segment_len]
+        *_, stft = scipy.signal.stft(
+            segment, nperseg=self.nperseg, noverlap=self.noverlap
+        )
         amplitude = np.abs(stft)
         db = 20 * np.log10(amplitude)
         image = self.transform(db)
@@ -51,13 +53,14 @@ class DataFile(Dataset):
 
 
 class NormalizeDataset(Dataset):
-    def __init__(self, dataset: Dataset, normalizer: Callable[[torch.Tensor], torch.Tensor]) -> None:
+    def __init__(
+        self, dataset: Dataset, normalizer: Callable[[torch.Tensor], torch.Tensor]
+    ) -> None:
         self.dataset = dataset
         self.normalizer = normalizer
 
     def __len__(self) -> int:
-        # noinspection PyTypeChecker
-        return len(self.dataset)
+        return len(self.dataset)  # type: ignore
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         image, label = self.dataset[idx]
@@ -79,17 +82,25 @@ class DataPipeline(ABC):
         data_rows = (row for _, row in data_frame.iterrows())
         data_files = (row.file for row in data_rows)
         labels = (row.label for row in data_rows)
-        data_files = [
-            self.get_data_file(file, label, segment_len, nperseg, noverlap) for file, label in zip(data_files, labels)
-        ]
-        dataset = ConcatDataset(data_files)
-        self.datasets["train"], self.datasets["valid"], self.datasets["test"] = random_split(dataset, [0.8, 0.1, 0.1])
+        dataset: Dataset = ConcatDataset(
+            [
+                self.get_data_file(file, label, segment_len, nperseg, noverlap)
+                for file, label in zip(data_files, labels)
+            ]
+        )
+        (
+            self.datasets["train"],
+            self.datasets["valid"],
+            self.datasets["test"],
+        ) = random_split(dataset, [0.8, 0.1, 0.1])
         return self
 
     def build_data_loaders(self, batch_size: int) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.datasets.keys()):
             raise ValueError("Datasets haven't been built.")
-        self.data_loaders["train"] = DataLoader(self.datasets["train"], batch_size, shuffle=True)
+        self.data_loaders["train"] = DataLoader(
+            self.datasets["train"], batch_size, shuffle=True
+        )
         self.data_loaders["valid"] = DataLoader(self.datasets["valid"], batch_size)
         self.data_loaders["test"] = DataLoader(self.datasets["test"], batch_size)
         return self
@@ -103,8 +114,6 @@ class DataPipeline(ABC):
         return self
 
     def normalize_data_loader(self, subset: Subset) -> None:
-        image_batch, _ = next(iter(self.data_loaders[subset]))
-        batch_size = image_batch.shape[0]
         pixel_min = float("inf")
         pixel_max = float("-inf")
         for image_batch, _ in self.data_loaders[subset]:
@@ -114,7 +123,12 @@ class DataPipeline(ABC):
         pixel_std = (pixel_max - pixel_min) / 2
         normalizer = torchvision.transforms.Normalize(pixel_mean, pixel_std)
         self.datasets[subset] = NormalizeDataset(self.datasets[subset], normalizer)
-        self.data_loaders[subset] = DataLoader(self.datasets[subset], batch_size)
+        image_batch, _ = next(iter(self.data_loaders[subset]))
+        batch_size = image_batch.shape[0]
+        shuffle = subset == "train"
+        self.data_loaders[subset] = DataLoader(
+            self.datasets[subset], batch_size, shuffle
+        )
 
     @abstractmethod
     def download_data(self) -> Self:
@@ -131,12 +145,12 @@ class DataPipeline(ABC):
         label: int,
         segment_len: int,
         nperseg: int,
-        noverlap: int
+        noverlap: int,
     ) -> DataFile:
         pass
 
 
-D = TypeVar('D', bound=type[DataPipeline])
+D = TypeVar("D", bound=type[DataPipeline])
 data_pipeline_registry: dict[str, type[DataPipeline]] = {}
 
 
@@ -144,6 +158,7 @@ def register_data_pipeline(dataset_name: str) -> Callable[[D], D]:
     def decorator(data_pipeline_cls: D) -> D:
         data_pipeline_registry[dataset_name] = data_pipeline_cls
         return data_pipeline_cls
+
     return decorator
 
 
