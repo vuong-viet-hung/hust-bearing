@@ -12,7 +12,7 @@ def main() -> None:
     parser.add_argument("--dataset-name", type=str)
     parser.add_argument("--data-dir", type=Path)
     parser.add_argument("--batch-size", type=int)
-    parser.add_argument("--segment_len", type=int, default=2048)
+    parser.add_argument("--segment-len", type=int, default=2048)
     parser.add_argument("--nperseg", type=int, default=256)
     parser.add_argument("--noverlap", type=int, default=192)
     parser.add_argument("--seed", type=int, default=21)
