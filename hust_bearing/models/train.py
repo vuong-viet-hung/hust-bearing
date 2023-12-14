@@ -4,7 +4,7 @@ from pathlib import Path
 
 import torch
 
-from bearing.data import get_data_pipeline
+from hust_bearing.data import get_data_pipeline
 
 
 def main() -> None:
