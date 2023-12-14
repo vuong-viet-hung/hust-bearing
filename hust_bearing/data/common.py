@@ -105,7 +105,9 @@ class DataPipeline(ABC):
         self.download_data(data_dir)
         return self
 
-    def p_build_dataset(self, seg_length: int, win_length: int, hop_length: int) -> Self:
+    def p_build_dataset(
+        self, seg_length: int, win_length: int, hop_length: int
+    ) -> Self:
         if self.data_dir is None:
             raise PipelineError("Dataset hasn't been downloaded.")
         data_files = self.list_data_files(self.data_dir)
@@ -145,11 +147,9 @@ class DataPipeline(ABC):
     def p_build_data_loaders(self) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.subsets.keys()):
             raise PipelineError("Dataset hasn't been built or split.")
-        self.data_loaders["train"] = DataLoader(
-            self.subsets["train"], self.batch_size, shuffle=True
-        )
-        self.data_loaders["valid"] = DataLoader(self.subsets["valid"], self.batch_size)
-        self.data_loaders["test"] = DataLoader(self.subsets["test"], self.batch_size)
+        self.build_data_loader("train")
+        self.build_data_loader("valid")
+        self.build_data_loader("test")
         return self
 
     def normalize_subset(self, subset: Subset) -> None:
@@ -165,6 +165,11 @@ class DataPipeline(ABC):
         scale = (pixel_max - pixel_min) / 2
         normalizer = torchvision.transforms.Normalize(loc, scale)
         self.subsets[subset] = NormalizeDataset(self.subsets[subset], normalizer)
+
+    def build_data_loader(self, subset: Subset) -> None:
+        self.data_loaders[subset] = DataLoader(
+            self.subsets[subset], self.batch_size, shuffle=(subset == "train")
+        )
 
     @abstractmethod
     def download_data(self, data_dir: Path) -> None:
