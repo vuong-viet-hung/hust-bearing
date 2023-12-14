@@ -119,12 +119,12 @@ class DataPipeline(ABC):
     def normalize_datasets(self) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.subsets.keys()):
             raise ValueError("Dataset hasn't been built or split.")
-        self.normalize_dataset("train")
-        self.normalize_dataset("valid")
-        self.normalize_dataset("test")
+        self.normalize_subset("train")
+        self.normalize_subset("valid")
+        self.normalize_subset("test")
         return self
 
-    def normalize_dataset(self, subset: Subset) -> None:
+    def normalize_subset(self, subset: Subset) -> None:
         pixel_min = float("inf")
         pixel_max = float("-inf")
         data_loader = DataLoader(self.subsets[subset], self.batch_size)
