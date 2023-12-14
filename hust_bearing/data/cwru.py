@@ -1,10 +1,8 @@
-import logging
 import shutil
 import re
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing_extensions import Self
 
 import numpy as np
 import scipy
@@ -14,12 +12,7 @@ from hust_bearing.data.common import DataPipeline, register_data_pipeline
 
 @register_data_pipeline("cwru")
 class CWRUPipeline(DataPipeline):
-    def download_data(self) -> Self:
-        if self.data_dir.exists():
-            logging.info(f"'cwru' dataset is already downloaded to '{self.data_dir}'.")
-            return self
-
-        logging.info(f"Downloading 'cwru' dataset to '{self.data_dir}'...")
+    def download(self, data_dir: Path) -> None:
         download_url = (
             "https://github.com/XiongMeijing/CWRU-1/archive/refs/heads/master.zip"
         )
@@ -31,17 +24,16 @@ class CWRUPipeline(DataPipeline):
             zip_ref.extractall()
 
         download_zip_file.unlink()
-        (download_extract_dir / "Data").rename(self.data_dir)
+        (download_extract_dir / "Data").rename(data_dir)
         shutil.rmtree(download_extract_dir)
-        return self
 
-    def list_data_files(self) -> list[Path]:
-        normal_data_files = list((self.data_dir / "Normal").glob("*.mat"))
-        fault_data_files = list((self.data_dir / "12k_DE").glob("*.mat"))
+    def list_data_files(self, data_dir: Path) -> list[Path]:
+        normal_data_files = list((data_dir / "Normal").glob("*.mat"))
+        fault_data_files = list((data_dir / "12k_DE").glob("*.mat"))
         return normal_data_files + fault_data_files
 
-    def get_label(self, data_file: Path | str) -> str:
-        return re.fullmatch(
+    def read_label(self, data_file: Path) -> str:
+        return re.fullmatch(  # type: ignore
             r"""
             ([a-zA-Z]+)  # Fault
             (\d{3})?  # Fault size
@@ -52,9 +44,9 @@ class CWRUPipeline(DataPipeline):
             """,
             Path(data_file).name,
             re.VERBOSE,
-        ).group(1)  # type: ignore
+        ).group(1)
 
-    def load_signal(self, data_file: Path | str) -> np.ndarray:
+    def load_signal(self, data_file: Path) -> np.ndarray:
         data = scipy.io.loadmat(str(data_file))
         *_, signal_key = (key for key in data.keys() if key.endswith("DE_time"))
         return data[signal_key].astype(np.float32).squeeze()

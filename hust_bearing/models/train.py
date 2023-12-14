@@ -29,9 +29,9 @@ def main() -> None:
         data_root_dir.mkdir(exist_ok=True)
         args.data_dir = data_root_dir / args.dataset_name
 
-    data_pipeline = get_data_pipeline(args.dataset_name, args.data_dir, args.batch_size)
+    data_pipeline = get_data_pipeline(args.dataset_name, args.batch_size)
     (
-        data_pipeline.download_data()
+        data_pipeline.download_data(args.data_dir)
         .build_dataset(args.seg_length, args.win_length, args.hop_length)
         .split_dataset((0.8, 0.1, 0.1))
         .normalize_datasets()

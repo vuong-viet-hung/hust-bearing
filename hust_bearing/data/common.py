@@ -1,4 +1,5 @@
 import functools
+import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable, Literal, TypeVar
@@ -13,7 +14,7 @@ from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
 import torch
 
 
-Loader = Callable[[Path | str], np.ndarray]
+Loader = Callable[[Path], np.ndarray]
 Transform = Callable[[np.ndarray], torch.Tensor]
 
 
@@ -26,10 +27,14 @@ def get_transform() -> Transform:
     )
 
 
+class PipelineError(Exception):
+    pass
+
+
 class SegmentSTFTs(Dataset):
     def __init__(
         self,
-        data_file: Path | str,
+        data_file: Path,
         label: int,
         seg_length: int,
         win_length: int,
@@ -44,7 +49,7 @@ class SegmentSTFTs(Dataset):
         self.hop_length = hop_length
         self.loader = loader
         self.transform = transform
-        signal = loader(self.data_file)
+        signal = loader(data_file)
         self.num_segments = len(signal) // self.seg_length
 
     def __len__(self) -> int:
@@ -84,17 +89,28 @@ Subset = Literal["train", "valid", "test"]
 
 
 class DataPipeline(ABC):
-    def __init__(self, data_dir: Path | str, batch_size: int) -> None:
-        self.data_dir = Path(data_dir)
+    def __init__(self, batch_size: int) -> None:
         self.batch_size = batch_size
+        self.data_dir: Path | None = None
         self.dataset: Dataset | None = None
         self.subsets: dict[Subset, Dataset] = {}
         self.data_loaders: dict[Subset, DataLoader] = {}
 
+    def download_data(self, data_dir: Path) -> Self:
+        if data_dir.exists():
+            logging.info(f"Dataset is already downloaded at '{data_dir}'.")
+            return self
+        logging.info(f"Downloading dataset to '{self.data_dir}'...")
+        self.download(data_dir)
+        self.data_dir = Path(data_dir)
+        return self
+
     def build_dataset(self, seg_length: int, win_length: int, hop_length: int) -> Self:
-        data_files = self.list_data_files()
+        if self.data_dir is None:
+            raise PipelineError("Dataset hasn't been downloaded.")
+        data_files = self.list_data_files(self.data_dir)
         encoder = LabelEncoder()
-        labels = encoder.fit_transform([self.get_label(file) for file in data_files])
+        labels = encoder.fit_transform([self.read_label(file) for file in data_files])
         get_segment_stfts = functools.partial(
             SegmentSTFTs,
             seg_length=seg_length,
@@ -110,7 +126,7 @@ class DataPipeline(ABC):
 
     def split_dataset(self, split_fractions: tuple[float, float, float]) -> Self:
         if self.dataset is None:
-            raise ValueError("Dataset hasn't been built.")
+            raise PipelineError("Dataset hasn't been built.")
         (
             self.subsets["train"],
             self.subsets["valid"],
@@ -120,7 +136,7 @@ class DataPipeline(ABC):
 
     def normalize_datasets(self) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.subsets.keys()):
-            raise ValueError("Dataset hasn't been built or split.")
+            raise PipelineError("Dataset hasn't been built or split.")
         self.normalize_subset("train")
         self.normalize_subset("valid")
         self.normalize_subset("test")
@@ -142,7 +158,7 @@ class DataPipeline(ABC):
 
     def build_data_loaders(self) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.subsets.keys()):
-            raise ValueError("Dataset hasn't been built or split.")
+            raise PipelineError("Dataset hasn't been built or split.")
         self.data_loaders["train"] = DataLoader(
             self.subsets["train"], self.batch_size, shuffle=True
         )
@@ -151,19 +167,19 @@ class DataPipeline(ABC):
         return self
 
     @abstractmethod
-    def download_data(self) -> Self:
+    def download(self, data_dir: Path) -> None:
         pass
 
     @abstractmethod
-    def list_data_files(self) -> list[Path]:
+    def list_data_files(self, data_dir: Path) -> list[Path]:
         pass
 
     @abstractmethod
-    def get_label(self, data_file: Path | str) -> str:
+    def read_label(self, data_file: Path) -> str:
         pass
 
     @abstractmethod
-    def load_signal(self, data_file: Path | str) -> np.ndarray:
+    def load_signal(self, data_file: Path) -> np.ndarray:
         pass
 
 
@@ -179,10 +195,8 @@ def register_data_pipeline(dataset_name: str) -> Callable[[D], D]:
     return decorator
 
 
-def get_data_pipeline(
-    dataset_name: str, data_dir: Path | str, batch_size: int
-) -> DataPipeline:
+def get_data_pipeline(dataset_name: str, batch_size: int) -> DataPipeline:
     if dataset_name not in data_pipeline_registry:
         raise ValueError(f"Unregistered dataset: '{dataset_name}'")
     data_pipeline_cls = data_pipeline_registry[dataset_name]
-    return data_pipeline_cls(data_dir, batch_size)
+    return data_pipeline_cls(batch_size)
