@@ -97,12 +97,12 @@ class DataPipeline(ABC):
         self.data_loaders: dict[Subset, DataLoader] = {}
 
     def download_data(self, data_dir: Path) -> Self:
+        self.data_dir = data_dir
         if data_dir.exists():
             logging.info(f"Dataset is already downloaded at '{data_dir}'.")
             return self
-        logging.info(f"Downloading dataset to '{self.data_dir}'...")
+        logging.info(f"Downloading dataset to '{data_dir}'...")
         self.download(data_dir)
-        self.data_dir = Path(data_dir)
         return self
 
     def build_dataset(self, seg_length: int, win_length: int, hop_length: int) -> Self:
