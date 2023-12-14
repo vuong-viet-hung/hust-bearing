@@ -4,7 +4,7 @@ import re
 import urllib.request
 import zipfile
 from pathlib import Path
-from typing import Self
+from typing_extensions import Self
 
 import numpy as np
 import pandas as pd

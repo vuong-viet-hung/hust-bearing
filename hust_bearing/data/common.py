@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Callable, Literal, Self, TypeVar
+from typing import Callable, Literal, TypeVar
+from typing_extensions import Self
 
 import numpy as np
 import pandas as pd
