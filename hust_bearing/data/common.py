@@ -119,9 +119,9 @@ class DataPipeline(ABC):
         for image_batch, _ in self.data_loaders[subset]:
             pixel_min = min(pixel_min, image_batch.min())
             pixel_max = max(pixel_max, image_batch.max())
-        pixel_mean = (pixel_max + pixel_min) / 2
-        pixel_std = (pixel_max - pixel_min) / 2
-        normalizer = torchvision.transforms.Normalize(pixel_mean, pixel_std)
+        loc = (pixel_max + pixel_min) / 2
+        scale = (pixel_max - pixel_min) / 2
+        normalizer = torchvision.transforms.Normalize(loc, scale)
         self.datasets[subset] = NormalizeDataset(self.datasets[subset], normalizer)
         image_batch, _ = next(iter(self.data_loaders[subset]))
         batch_size = image_batch.shape[0]
