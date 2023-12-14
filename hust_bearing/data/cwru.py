@@ -48,7 +48,7 @@ class CWRUPipeline(DataPipeline):
             (\d{3})?  # Fault size
             (@\d+)?  # Fault location
             _
-            (\d+)  # Load (HP)
+            (\d+)  # Load (hp)
             \.mat
             """,
             re.VERBOSE,
