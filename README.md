@@ -1,6 +1,6 @@
 # HUST Bearing (Work in Progress)
 <p align="center">
-    <img src="assests/mandevices_logo.png" style="width:75%;">
+    <img src="assests/mandevices_logo.jpg">
 </p>
 
 ## Introduction
