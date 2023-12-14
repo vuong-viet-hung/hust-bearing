@@ -11,10 +11,10 @@ def main() -> None:
     parser = ArgumentParser()
     parser.add_argument("--dataset-name", type=str)
     parser.add_argument("--data-dir", type=Path)
-    parser.add_argument("--batch-size", type=int)
-    parser.add_argument("--segment-len", type=int, default=2048)
-    parser.add_argument("--nperseg", type=int, default=256)
-    parser.add_argument("--noverlap", type=int, default=192)
+    parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument("--seg-length", type=int, default=2048)
+    parser.add_argument("--win_length", type=int, default=256)
+    parser.add_argument("--hop_length", type=int, default=64)
     parser.add_argument("--seed", type=int, default=21)
     parser.add_argument("--logging-level", type=str, default="info")
     args = parser.parse_args()
@@ -29,12 +29,13 @@ def main() -> None:
         data_root_dir.mkdir(exist_ok=True)
         args.data_dir = data_root_dir / args.dataset_name
 
-    data_pipeline = get_data_pipeline(args.dataset_name, args.data_dir)
+    data_pipeline = get_data_pipeline(args.dataset_name, args.data_dir, args.batch_size)
     (
         data_pipeline.download_data()
-        .build_datasets(args.segment_len, args.nperseg, args.noverlap)
-        .build_data_loaders(args.batch_size)
-        .normalize_data_loaders()
+        .build_dataset(args.seg_length, args.win_length, args.hop_length)
+        .split_dataset((0.8, 0.1, 0.1))
+        .normalize_datasets()
+        .build_data_loaders()
     )
 
 

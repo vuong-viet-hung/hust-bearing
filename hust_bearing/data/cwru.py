@@ -9,16 +9,9 @@ from typing_extensions import Self
 import numpy as np
 import pandas as pd
 import scipy
-import torchvision
 from sklearn.preprocessing import LabelEncoder
 
-from hust_bearing.data.common import DataPipeline, DataFile, register_data_pipeline
-
-
-def load_signal(data_file: str | Path) -> np.ndarray:
-    data = scipy.io.loadmat(str(data_file))
-    *_, signal_key = (key for key in data.keys() if key.endswith("DE_time"))
-    return data[signal_key].astype(np.float32).squeeze()
+from hust_bearing.data.common import DataPipeline, register_data_pipeline
 
 
 @register_data_pipeline("cwru")
@@ -72,21 +65,7 @@ class CWRUPipeline(DataPipeline):
         df["label"] = encoder.fit_transform(df.fault)
         return df
 
-    def get_data_file(
-        self,
-        data_file: Path | str,
-        label: int,
-        segment_len: int,
-        nperseg: int,
-        noverlap: int,
-    ) -> DataFile:
-        loader = load_signal
-        transform = torchvision.transforms.Compose(
-            [
-                torchvision.transforms.ToTensor(),
-                torchvision.transforms.Resize((64, 64), antialias=None),
-            ]
-        )
-        return DataFile(
-            data_file, label, segment_len, nperseg, noverlap, loader, transform
-        )
+    def load_signal(self, data_file: str | Path) -> np.ndarray:
+        data = scipy.io.loadmat(str(data_file))
+        *_, signal_key = (key for key in data.keys() if key.endswith("DE_time"))
+        return data[signal_key].astype(np.float32).squeeze()

@@ -1,3 +1,4 @@
+import functools
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable, Literal, TypeVar
@@ -16,35 +17,46 @@ Loader = Callable[[Path | str], np.ndarray]
 Transform = Callable[[np.ndarray], torch.Tensor]
 
 
+def get_transform() -> Transform:
+    return torchvision.transforms.Compose(
+        [
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Resize((64, 64), antialias=None),
+        ]
+    )
+
+
 class DataFile(Dataset):
     def __init__(
         self,
         data_file: Path | str,
         label: int,
-        segment_len: int,
-        nperseg: int,
-        noverlap: int,
+        seg_length: int,
+        win_length: int,
+        hop_length: int,
         loader: Loader,
         transform: Transform,
     ) -> None:
         self.data_file = data_file
         self.label = torch.tensor(label)
-        self.segment_len = segment_len
-        self.nperseg = nperseg
-        self.noverlap = noverlap
+        self.seg_length = seg_length
+        self.win_length = win_length
+        self.hop_length = hop_length
         self.loader = loader
         self.transform = transform
         signal = loader(self.data_file)
-        self.num_segments = len(signal) // self.segment_len
+        self.num_segments = len(signal) // self.seg_length
 
     def __len__(self) -> int:
         return self.num_segments
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         signal = self.loader(self.data_file)
-        segment = signal[idx * self.segment_len : (idx + 1) * self.segment_len]
+        segment = signal[idx * self.seg_length : (idx + 1) * self.seg_length]
         *_, stft = scipy.signal.stft(
-            segment, nperseg=self.nperseg, noverlap=self.noverlap
+            segment,
+            nperseg=self.win_length,
+            noverlap=(self.win_length - self.hop_length),
         )
         amplitude = np.abs(stft)
         db = 20 * np.log10(amplitude)
@@ -72,63 +84,69 @@ Subset = Literal["train", "valid", "test"]
 
 
 class DataPipeline(ABC):
-    def __init__(self, data_dir: Path | str) -> None:
+    def __init__(self, data_dir: Path | str, batch_size: int) -> None:
         self.data_dir = Path(data_dir)
+        self.batch_size = batch_size
+        self.dataset: Dataset | None = None
         self.datasets: dict[Subset, Dataset] = {}
         self.data_loaders: dict[Subset, DataLoader] = {}
 
-    def build_datasets(self, segment_len: int, nperseg: int, noverlap: int) -> Self:
+    def build_dataset(self, seg_length: int, win_length: int, hop_length: int) -> Self:
         data_frame = self.get_data_frame()
-        data_rows = (row for _, row in data_frame.iterrows())
-        data_files = (row.file for row in data_rows)
-        labels = (row.label for row in data_rows)
-        dataset: Dataset = ConcatDataset(
-            [
-                self.get_data_file(file, label, segment_len, nperseg, noverlap)
-                for file, label in zip(data_files, labels)
-            ]
+        get_data_file = functools.partial(
+            DataFile,
+            seg_length=seg_length,
+            win_length=win_length,
+            hop_length=hop_length,
+            loader=self.load_signal,
+            transform=get_transform(),
         )
+        self.dataset = ConcatDataset(
+            [get_data_file(row.file, row.label) for _, row in data_frame.iterrows()]
+        )
+        return self
+
+    def split_dataset(self, split_fractions: tuple[float, float, float]) -> Self:
+        if self.dataset is None:
+            raise ValueError("Dataset hasn't been built.")
         (
             self.datasets["train"],
             self.datasets["valid"],
             self.datasets["test"],
-        ) = random_split(dataset, [0.8, 0.1, 0.1])
+        ) = random_split(self.dataset, split_fractions)
         return self
 
-    def build_data_loaders(self, batch_size: int) -> Self:
+    def normalize_datasets(self) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.datasets.keys()):
-            raise ValueError("Datasets haven't been built.")
-        self.data_loaders["train"] = DataLoader(
-            self.datasets["train"], batch_size, shuffle=True
-        )
-        self.data_loaders["valid"] = DataLoader(self.datasets["valid"], batch_size)
-        self.data_loaders["test"] = DataLoader(self.datasets["test"], batch_size)
+            raise ValueError("Dataset hasn't been built or split.")
+        self.normalize_dataset("train")
+        self.normalize_dataset("valid")
+        self.normalize_dataset("test")
         return self
 
-    def normalize_data_loaders(self) -> Self:
-        if {"train", "valid", "test"}.symmetric_difference(self.data_loaders.keys()):
-            raise ValueError("Data loaders haven't been built.")
-        self.normalize_data_loader("train")
-        self.normalize_data_loader("valid")
-        self.normalize_data_loader("test")
-        return self
-
-    def normalize_data_loader(self, subset: Subset) -> None:
+    def normalize_dataset(self, subset: Subset) -> None:
         pixel_min = float("inf")
         pixel_max = float("-inf")
-        for image_batch, _ in self.data_loaders[subset]:
+        data_loader = DataLoader(self.datasets[subset], self.batch_size)
+
+        for image_batch, _ in data_loader:
             pixel_min = min(pixel_min, image_batch.min())
             pixel_max = max(pixel_max, image_batch.max())
+
         loc = (pixel_max + pixel_min) / 2
         scale = (pixel_max - pixel_min) / 2
         normalizer = torchvision.transforms.Normalize(loc, scale)
         self.datasets[subset] = NormalizeDataset(self.datasets[subset], normalizer)
-        image_batch, _ = next(iter(self.data_loaders[subset]))
-        batch_size = image_batch.shape[0]
-        shuffle = subset == "train"
-        self.data_loaders[subset] = DataLoader(
-            self.datasets[subset], batch_size, shuffle
+
+    def build_data_loaders(self) -> Self:
+        if {"train", "valid", "test"}.symmetric_difference(self.datasets.keys()):
+            raise ValueError("Dataset hasn't been built or split.")
+        self.data_loaders["train"] = DataLoader(
+            self.datasets["train"], self.batch_size, shuffle=True
         )
+        self.data_loaders["valid"] = DataLoader(self.datasets["valid"], self.batch_size)
+        self.data_loaders["test"] = DataLoader(self.datasets["test"], self.batch_size)
+        return self
 
     @abstractmethod
     def download_data(self) -> Self:
@@ -139,14 +157,7 @@ class DataPipeline(ABC):
         pass
 
     @abstractmethod
-    def get_data_file(
-        self,
-        data_file: Path | str,
-        label: int,
-        segment_len: int,
-        nperseg: int,
-        noverlap: int,
-    ) -> DataFile:
+    def load_signal(self, data_file: Path | str) -> np.ndarray:
         pass
 
 
@@ -162,8 +173,10 @@ def register_data_pipeline(dataset_name: str) -> Callable[[D], D]:
     return decorator
 
 
-def get_data_pipeline(dataset_name: str, data_dir: str | Path) -> DataPipeline:
+def get_data_pipeline(
+    dataset_name: str, data_dir: str | Path, batch_size: int
+) -> DataPipeline:
     if dataset_name not in data_pipeline_registry:
-        raise ValueError(f"Unregistered dataset: {dataset_name!s}")
+        raise ValueError(f"Unregistered dataset: '{dataset_name}'")
     data_pipeline_cls = data_pipeline_registry[dataset_name]
-    return data_pipeline_cls(data_dir)
+    return data_pipeline_cls(data_dir, batch_size)
