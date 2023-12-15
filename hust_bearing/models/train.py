@@ -27,7 +27,6 @@ def main() -> None:
     parser.add_argument("--model-file", type=Path)
     parser.add_argument("--num-epochs", type=int, default=10)
     parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--gamma", type=float, default=0.5)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--logging-level", type=str, default="info")
     args = parser.parse_args()
