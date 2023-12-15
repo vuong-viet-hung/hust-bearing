@@ -183,16 +183,6 @@ class Pipeline(ABC):
         self.build_data_loader("test")
         return self
 
-    def p_truncate(self, n_sigma: int) -> Self:
-        if {"train", "valid", "test"}.symmetric_difference(self.data_loaders.keys()):
-            raise ValueError("Data loaders aren't built.")
-        logging.info("Truncating data...")
-        self.truncate("train", n_sigma)
-        self.truncate("valid", n_sigma)
-        self.truncate("test", n_sigma)
-        logging.info("Data truncated")
-        return self
-
     def p_min_max_scale(self) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.data_loaders.keys()):
             raise ValueError("Data loaders aren't built.")
@@ -220,17 +210,6 @@ class Pipeline(ABC):
             shuffle=(subset == "train"),
             num_workers=self.num_workers,
         )
-
-    def truncate(self, subset: Subset, n_sigma: int) -> None:
-        data_loader = self.data_loaders[subset]
-        if subset == "train":
-            self.pixel_mean, self.pixel_std = compute_mean_std(data_loader)
-        outlier = self.pixel_std * n_sigma
-        transform = torchvision.transforms.Lambda(
-            lambda image: image.clamp(-outlier, outlier)
-        )
-        self.subsets[subset] = TransformDataset(self.subsets[subset], transform)
-        self.build_data_loader(subset)
 
     def min_max_scale(self, subset: Subset) -> None:
         data_loader = self.data_loaders[subset]

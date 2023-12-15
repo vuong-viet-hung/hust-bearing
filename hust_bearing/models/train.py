@@ -54,7 +54,6 @@ def main() -> None:
         )
         .p_split_dataset(args.fractions)
         .p_build_data_loaders(args.batch_size, args.num_workers)
-        # .p_truncate(n_sigma=2)
         .p_normalize()
     )
 
