@@ -229,7 +229,7 @@ class Pipeline(ABC):
         )
         self.subsets[subset] = TransformDataset(self.subsets[subset], transform)
         self.build_data_loader(subset)
-        logging.debug(f"{subset}: mean={pixel_mean}, std={pixel_std})")
+        logging.debug(f"{subset}: mean={pixel_mean:.2f}, std={pixel_std:.2f})")
 
     def min_max_scale(self, subset: Subset) -> None:
         data_loader = self.data_loaders[subset]
