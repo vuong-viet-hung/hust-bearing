@@ -30,6 +30,7 @@ class Engine:
         self.model.train()
         for image_batch, label_batch in prog_bar:
             self.train_one_step(image_batch, label_batch)
+            self.eval_one_epoch(image_batch, label_batch)
 
     def train_one_step(
         self, image_batch: torch.Tensor, label_batch: torch.Tensor
