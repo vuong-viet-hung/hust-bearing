@@ -20,8 +20,8 @@ def main() -> None:
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--image-size", type=int, nargs=2, default=(64, 64))
     parser.add_argument("--seg-length", type=int, default=2048)
-    parser.add_argument("--win-length", type=int, default=256)
-    parser.add_argument("--hop-length", type=int, default=64)
+    parser.add_argument("--win-length", type=int, default=512)
+    parser.add_argument("--hop-length", type=int, default=128)
     parser.add_argument(
         "--split-fractions", type=float, nargs=3, default=(0.8, 0.1, 0.1)
     )
