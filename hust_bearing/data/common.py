@@ -93,14 +93,18 @@ class DataPipeline(ABC):
         return self
 
     def p_build_dataset(
-        self, seg_length: int, win_length: int, hop_length: int
+        self,
+        image_size: tuple[int, int],
+        seg_length: int,
+        win_length: int,
+        hop_length: int,
     ) -> Self:
         if self.data_dir is None:
             raise PipelineError("Dataset hasn't been downloaded.")
         transform = torchvision.transforms.Compose(
             [
                 torchvision.transforms.ToTensor(),
-                torchvision.transforms.Resize((64, 64), antialias=None),
+                torchvision.transforms.Resize(image_size, antialias=None),
             ]
         )
         get_segment_stfts = functools.partial(

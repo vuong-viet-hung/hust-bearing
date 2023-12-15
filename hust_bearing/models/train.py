@@ -29,10 +29,11 @@ def main() -> None:
         data_root_dir.mkdir(exist_ok=True)
         args.data_dir = data_root_dir / args.dataset_name
 
+    image_size = (64, 64)
     data_pipeline = build_data_pipeline(args.dataset_name, args.batch_size)
     (
         data_pipeline.p_download_data(args.data_dir)
-        .p_build_dataset(args.seg_length, args.win_length, args.hop_length)
+        .p_build_dataset(image_size, args.seg_length, args.win_length, args.hop_length)
         .p_split_dataset((0.8, 0.1, 0.1))
         .p_normalize_datasets()
         .p_build_data_loaders()
