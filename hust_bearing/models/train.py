@@ -61,6 +61,7 @@ def main() -> None:
         loss_func,
         optimizer,
     )
+    engine.test(pipeline.data_loaders["test"], loss_func)
 
 
 if __name__ == "__main__":

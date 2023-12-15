@@ -81,7 +81,7 @@ class Engine:
         self.optimizer = optimizer
         for _ in trange(num_epochs):
             self.train_one_epoch(train_dl)
-            self.eval_one_epoch(valid_dl)
+            self.valid_one_step(valid_dl)
 
     def train_one_epoch(self, train_dl: DataLoader) -> None:
         if self.loss is None:
@@ -112,7 +112,7 @@ class Engine:
         self.accuracy.update(output_batch, target_batch)
 
     @torch.no_grad()
-    def eval_one_epoch(self, valid_dl: DataLoader) -> None:
+    def valid_one_step(self, valid_dl: DataLoader) -> None:
         if self.loss is None:
             raise ValueError("Loss or optimizer isn't initialized.")
         prog_bar = tqdm(valid_dl)
@@ -139,7 +139,17 @@ class Engine:
     def test(self, test_dl: DataLoader, loss_func: nn.Module) -> None:
         self.loss_func = loss_func
         self.loss = Loss(loss_func)
-        self.eval_one_epoch(test_dl)
+        if self.loss is None:
+            raise ValueError("Loss or optimizer isn't initialized.")
+        prog_bar = tqdm(test_dl)
+        self.model.eval()
+        for input_batch, target_batch in prog_bar:
+            self.eval_one_step(input_batch, target_batch)
+            prog_bar.set_description(
+                f"test: loss={self.loss.compute():.4f}, acc={self.accuracy.compute():.4f}"
+            )
+        self.loss.reset()
+        self.accuracy.reset()
 
     @torch.no_grad()
     def predict(self, predict_dl: DataLoader) -> torch.Tensor:
