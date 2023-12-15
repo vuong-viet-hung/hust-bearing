@@ -1,6 +1,5 @@
+.idea/
 .venv/
 __pycache__/
-/.idea/
-/data/
-/models/
-/reports/
+*.mat
+*.pth
