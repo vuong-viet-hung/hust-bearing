@@ -55,14 +55,16 @@ def main() -> None:
         )
         .p_split_dataset(args.fractions)
         .p_build_data_loaders(args.batch_size, args.num_workers)
-        .p_truncate(n_sigma=2)
+        # .p_truncate(n_sigma=2)
         .p_normalize()
     )
 
     model = models.build_model(args.model, pipeline.num_classes)
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), args.lr)
-    lr_scheduler = optim.lr_scheduler.ExponentialLR(optimizer, args.gamma)
+    lr_scheduler = optim.lr_scheduler.PolynomialLR(
+        optimizer, args.num_epochs, power=2.0
+    )
     engine = models.Engine(model, args.device, args.model_file)
     engine.train(
         pipeline.data_loaders["train"],

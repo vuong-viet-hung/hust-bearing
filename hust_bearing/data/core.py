@@ -93,8 +93,7 @@ def compute_mean_std(data_loader: DataLoader) -> tuple[float, float]:
     pixel_mean = pixel_sum / num_pixels
 
     pixel_ssd = sum(
-        ((image_batch - pixel_mean) ** 2).sum().item()
-        for image_batch, _ in data_loader
+        ((image_batch - pixel_mean) ** 2).sum().item() for image_batch, _ in data_loader
     )
 
     pixel_std = (pixel_ssd / num_pixels) ** 0.5
@@ -115,12 +114,16 @@ def compute_min_max(data_loader: DataLoader) -> tuple[float, float]:
 class Pipeline(ABC):
     def __init__(self) -> None:
         self.data_dir: Path | None = None
-        self.batch_size: int | None = None
-        self.num_workers: int | None = None
+        self.batch_size: int = 1
+        self.num_workers: int = 1
         self.dataset: Dataset | None = None
         self.num_classes: int = 0
         self.subsets: dict[Subset, Dataset] = {}
         self.data_loaders: dict[Subset, DataLoader] = {}
+        self.pixel_min: float = float("inf")
+        self.pixel_max: float = float("-inf")
+        self.pixel_mean: float = 0.0
+        self.pixel_std: float = 0.0
 
     def p_download(self, data_dir: Path) -> Self:
         if not data_dir.exists():
@@ -211,8 +214,6 @@ class Pipeline(ABC):
         return self
 
     def build_data_loader(self, subset: Subset) -> None:
-        if self.batch_size is None or self.num_workers is None:
-            raise ValueError
         self.data_loaders[subset] = DataLoader(
             self.subsets[subset],
             self.batch_size,
@@ -222,32 +223,35 @@ class Pipeline(ABC):
 
     def truncate(self, subset: Subset, n_sigma: int) -> None:
         data_loader = self.data_loaders[subset]
-        pixel_mean, pixel_std = compute_mean_std(data_loader)
-        outlier = pixel_std * n_sigma
+        if subset == "train":
+            self.pixel_mean, self.pixel_std = compute_mean_std(data_loader)
+            logging.debug(f"mean={self.pixel_mean:.2f}, std={self.pixel_std:.2f}")
+        outlier = self.pixel_std * n_sigma
         transform = torchvision.transforms.Lambda(
             lambda image: image.clamp(-outlier, outlier)
         )
         self.subsets[subset] = TransformDataset(self.subsets[subset], transform)
         self.build_data_loader(subset)
-        logging.debug(f"{subset}: mean={pixel_mean:.2f}, std={pixel_std:.2f}")
 
     def min_max_scale(self, subset: Subset) -> None:
         data_loader = self.data_loaders[subset]
-        pixel_min, pixel_max = compute_min_max(data_loader)
-        loc = (pixel_max + pixel_min) / 2
-        scale = (pixel_max - pixel_min) / 2
+        if subset == "train":
+            self.pixel_min, self.pixel_max = compute_min_max(data_loader)
+            logging.debug(f"min={self.pixel_min:.2f}, max={self.pixel_max:.2f}")
+        loc = (self.pixel_max + self.pixel_min) / 2
+        scale = (self.pixel_max - self.pixel_min) / 2
         scaler = torchvision.transforms.Normalize(loc, scale)
         self.subsets[subset] = TransformDataset(self.subsets[subset], scaler)
         self.build_data_loader(subset)
-        logging.debug(f"{subset}: min={pixel_min:.2f}, max={pixel_max:.2f}")
 
     def normalize(self, subset: Subset) -> None:
         data_loader = self.data_loaders[subset]
-        pixel_mean, pixel_std = compute_mean_std(data_loader)
-        normalizer = torchvision.transforms.Normalize(pixel_mean, pixel_std)
+        if subset == "train":
+            self.pixel_mean, self.pixel_std = compute_mean_std(data_loader)
+            logging.debug(f"mean={self.pixel_mean:.2f}, std={self.pixel_std:.2f}")
+        normalizer = torchvision.transforms.Normalize(self.pixel_mean, self.pixel_std)
         self.subsets[subset] = TransformDataset(self.subsets[subset], normalizer)
         self.build_data_loader(subset)
-        logging.debug(f"{subset}: mean={pixel_mean:.2f}, std={pixel_std:.2f}")
 
     @abstractmethod
     def download(self, data_dir: Path) -> None:
