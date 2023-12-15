@@ -140,14 +140,14 @@ class Pipeline(ABC):
         )
         return self
 
-    def p_split_dataset(self, split_fractions: tuple[float, float, float]) -> Self:
+    def p_split_dataset(self, fractions: tuple[float, float, float]) -> Self:
         if self.dataset is None:
             raise ValueError("Dataset isn't built.")
         (
             self.subsets["train"],
             self.subsets["valid"],
             self.subsets["test"],
-        ) = random_split(self.dataset, split_fractions)
+        ) = random_split(self.dataset, fractions)
         return self
 
     def p_normalize_datasets(self) -> Self:

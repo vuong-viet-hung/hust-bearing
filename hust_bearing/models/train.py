@@ -20,9 +20,7 @@ def main() -> None:
     parser.add_argument("--seg-length", type=int, default=2048)
     parser.add_argument("--win-length", type=int, default=512)
     parser.add_argument("--hop-length", type=int, default=128)
-    parser.add_argument(
-        "--split-fractions", type=float, nargs=3, default=(0.8, 0.1, 0.1)
-    )
+    parser.add_argument("--fractions", type=float, nargs=3, default=(0.8, 0.1, 0.1))
     parser.add_argument("--model", type=str, required=True)
     parser.add_argument("--device", type=str, default=default_device)
     parser.add_argument("--model-file", type=Path)
