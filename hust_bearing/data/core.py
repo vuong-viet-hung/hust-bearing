@@ -82,35 +82,6 @@ class TransformDataset(Dataset):
 Subset = Literal["train", "valid", "test"]
 
 
-def compute_mean_std(data_loader: DataLoader) -> tuple[float, float]:
-    pixel_sum = 0.0
-    num_pixels = 0
-
-    for image_batch, _ in data_loader:
-        pixel_sum += image_batch.sum()
-        num_pixels += image_batch.numel()
-
-    pixel_mean = pixel_sum / num_pixels
-
-    pixel_ssd = sum(
-        ((image_batch - pixel_mean) ** 2).sum().item() for image_batch, _ in data_loader
-    )
-
-    pixel_std = (pixel_ssd / num_pixels) ** 0.5
-    return pixel_mean, pixel_std
-
-
-def compute_min_max(data_loader: DataLoader) -> tuple[float, float]:
-    pixel_min = float("inf")
-    pixel_max = float("-inf")
-
-    for image_batch, _ in data_loader:
-        pixel_min = min(pixel_min, image_batch.min().item())
-        pixel_max = max(pixel_max, image_batch.max().item())
-
-    return pixel_min, pixel_max
-
-
 class Pipeline(ABC):
     def __init__(self) -> None:
         self.data_dir: Path | None = None
@@ -212,9 +183,8 @@ class Pipeline(ABC):
         )
 
     def min_max_scale(self, subset: Subset) -> None:
-        data_loader = self.data_loaders[subset]
-        if subset == "train":
-            self.pixel_min, self.pixel_max = compute_min_max(data_loader)
+        if self.pixel_min == float("inf"):
+            self.compute_stats()
         loc = (self.pixel_max + self.pixel_min) / 2
         scale = (self.pixel_max - self.pixel_min) / 2
         scaler = torchvision.transforms.Normalize(loc, scale)
@@ -222,12 +192,31 @@ class Pipeline(ABC):
         self.build_data_loader(subset)
 
     def normalize(self, subset: Subset) -> None:
-        data_loader = self.data_loaders[subset]
-        if subset == "train":
-            self.pixel_mean, self.pixel_std = compute_mean_std(data_loader)
+        if self.pixel_min == float("inf"):
+            self.compute_stats()
         normalizer = torchvision.transforms.Normalize(self.pixel_mean, self.pixel_std)
         self.subsets[subset] = TransformDataset(self.subsets[subset], normalizer)
         self.build_data_loader(subset)
+
+    def compute_stats(self) -> None:
+        pixel_sum = 0.0
+        num_pixels = 0
+        data_loader = self.data_loaders["train"]
+
+        for image_batch, _ in data_loader:
+            self.pixel_min = min(self.pixel_min, image_batch.min().item())
+            self.pixel_max = max(self.pixel_max, image_batch.max().item())
+            pixel_sum += image_batch.sum().item()
+            num_pixels += image_batch.numel().item()
+
+        self.pixel_mean = pixel_sum / num_pixels
+
+        pixel_ssd = sum(
+            ((image_batch - self.pixel_mean) ** 2).sum().item()
+            for image_batch, _ in data_loader
+        )
+
+        self.pixel_std = (pixel_ssd / num_pixels) ** 0.5
 
     @abstractmethod
     def download(self, data_dir: Path) -> None:
