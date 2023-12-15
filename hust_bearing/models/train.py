@@ -33,11 +33,6 @@ def main() -> None:
     parser.add_argument("--logging-level", type=str, default="info")
     args = parser.parse_args()
 
-    torch.manual_seed(args.seed)
-    logging.basicConfig(
-        level=getattr(logging, args.logging_level.upper()), format="%(message)s"
-    )
-
     if args.data_dir is None:
         data_root_dir = Path("data")
         data_root_dir.mkdir(exist_ok=True)
@@ -47,6 +42,11 @@ def main() -> None:
         model_dir = Path("models") / args.dataset
         model_dir.mkdir(parents=True, exist_ok=True)
         args.model_file = (model_dir / args.model).with_suffix(".pth")
+
+    torch.manual_seed(args.seed)
+    logging.basicConfig(
+        level=getattr(logging, args.logging_level.upper()), format="%(message)s"
+    )
 
     pipeline = data.build_pipeline(args.dataset, args.batch_size)
     (
