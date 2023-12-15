@@ -16,7 +16,7 @@ def main() -> None:
     parser.add_argument("--data-dir", type=Path)
     parser.add_argument("--device",  type=str, default=default_device)
     parser.add_argument("--num-epochs", type=int, required=True)
-    parser.add_argument("--lr", type=float, default=1e-5)
+    parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--image-size", type=int, nargs=2, default=(64, 64))
     parser.add_argument("--seg-length", type=int, default=2048)

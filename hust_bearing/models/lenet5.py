@@ -7,7 +7,9 @@ class LeNet5(nn.Module):
         self.conv1 = nn.Conv2d(1, 6, kernel_size=5, stride=1)
         self.conv2 = nn.Conv2d(6, 16, kernel_size=5, stride=1)
         self.fc1 = nn.Linear(16 * 13 * 13, 120)
+        self.dropout1 = nn.Dropout(p=0.5)
         self.fc2 = nn.Linear(120, 84)
+        self.dropout2 = nn.Dropout(p=0.5)
         self.fc3 = nn.Linear(84, num_classes)
 
     def forward(self, x):
@@ -17,6 +19,8 @@ class LeNet5(nn.Module):
         x = nn.functional.max_pool2d(x, kernel_size=2, stride=2)
         x = x.view(x.size(0), -1)
         x = nn.functional.relu(self.fc1(x))
+        x = self.dropout1(x)
         x = nn.functional.relu(self.fc2(x))
+        x = self.dropout2(x)
         x = self.fc3(x)
         return x
