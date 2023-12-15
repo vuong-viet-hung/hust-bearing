@@ -34,7 +34,7 @@ class SegmentSTFTs(Dataset):
         win_length: int,
         hop_length: int,
         loader: Callable[[Path], np.ndarray],
-        transform: Callable[[np.ndarray], torch.Tensor],
+        transform: Callable[[torch.Tensor], torch.Tensor],
     ) -> None:
         self.data_file = data_file
         self.target = torch.tensor(target)
@@ -61,12 +61,12 @@ class SegmentSTFTs(Dataset):
         return image, self.target
 
 
-class NormalizeDataset(Dataset):
+class TransformDataset(Dataset):
     def __init__(
-        self, dataset: Dataset, normalizer: Callable[[torch.Tensor], torch.Tensor]
+        self, dataset: Dataset, transform: Callable[[torch.Tensor], torch.Tensor]
     ) -> None:
         self.dataset = dataset
-        self.normalizer = normalizer
+        self.transform = transform
 
     def __len__(self) -> int:
         if is_sized(self.dataset):
@@ -75,23 +75,54 @@ class NormalizeDataset(Dataset):
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         image, label = self.dataset[idx]
-        image = self.normalizer(image)
+        image = self.transform(image)
         return image, label
 
 
 Subset = Literal["train", "valid", "test"]
 
 
+def compute_mean_std(data_loader: DataLoader) -> tuple[float, float]:
+    pixel_sum = 0.0
+    num_pixels = 0
+
+    for image_batch, _ in data_loader:
+        pixel_sum += image_batch.sum()
+        num_pixels += image_batch.numel()
+
+    pixel_mean = pixel_sum / num_pixels
+
+    pixel_ssd = sum(
+        ((image_batch - pixel_mean) ** 2).sum().item()
+        for image_batch, _ in data_loader
+    )
+
+    pixel_std = (pixel_ssd / num_pixels) ** 0.5
+    return pixel_mean, pixel_std
+
+
+def compute_min_max(data_loader: DataLoader) -> tuple[float, float]:
+    pixel_min = float("inf")
+    pixel_max = float("-inf")
+
+    for image_batch, _ in data_loader:
+        pixel_min = min(pixel_min, image_batch.min().item())
+        pixel_max = max(pixel_max, image_batch.max().item())
+
+    return pixel_min, pixel_max
+
+
 class Pipeline(ABC):
-    def __init__(self, batch_size: int) -> None:
-        self.batch_size = batch_size
+    def __init__(self) -> None:
         self.data_dir: Path | None = None
+        self.batch_size: int | None = None
+        self.num_workers: int | None = None
         self.dataset: Dataset | None = None
         self.num_classes: int = 0
         self.subsets: dict[Subset, Dataset] = {}
         self.data_loaders: dict[Subset, DataLoader] = {}
 
-    def p_download_data(self, data_dir: Path) -> Self:
+    def p_download(self, data_dir: Path) -> Self:
         if not data_dir.exists():
             logging.info(f"Downloading data to '{data_dir}'...")
             self.download_data(data_dir)
@@ -139,43 +170,84 @@ class Pipeline(ABC):
         ) = random_split(self.dataset, fractions)
         return self
 
-    def p_normalize_datasets(self) -> Self:
+    def p_build_data_loaders(self, batch_size: int, num_workers: int) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.subsets.keys()):
             raise ValueError("Dataset isn't built or split.")
-        logging.info("Preprocessing data...")
-        self.normalize_subset("train")
-        self.normalize_subset("valid")
-        self.normalize_subset("test")
-        logging.info("Data preprocessed")
-        return self
-
-    def p_build_data_loaders(self) -> Self:
-        if {"train", "valid", "test"}.symmetric_difference(self.subsets.keys()):
-            raise ValueError("Dataset isn't built or split.")
+        self.batch_size = batch_size
+        self.num_workers = num_workers
         self.build_data_loader("train")
         self.build_data_loader("valid")
         self.build_data_loader("test")
         return self
 
-    def normalize_subset(self, subset: Subset) -> None:
-        pixel_min = float("inf")
-        pixel_max = float("-inf")
-        data_loader = DataLoader(self.subsets[subset], self.batch_size, num_workers=8)
-        for image_batch, _ in data_loader:
-            pixel_min = min(pixel_min, image_batch.min())
-            pixel_max = max(pixel_max, image_batch.max())
-        loc = (pixel_max + pixel_min) / 2
-        scale = (pixel_max - pixel_min) / 2
-        normalizer = torchvision.transforms.Normalize(loc, scale)
-        self.subsets[subset] = NormalizeDataset(self.subsets[subset], normalizer)
+    def p_truncate(self, n_sigma: int) -> Self:
+        if {"train", "valid", "test"}.symmetric_difference(self.data_loaders.keys()):
+            raise ValueError("Data loaders aren't built.")
+        logging.info("Truncating data...")
+        self.truncate("train", n_sigma)
+        self.truncate("valid", n_sigma)
+        self.truncate("test", n_sigma)
+        logging.info("Data truncated")
+        return self
+
+    def p_min_max_scale(self) -> Self:
+        if {"train", "valid", "test"}.symmetric_difference(self.data_loaders.keys()):
+            raise ValueError("Data loaders aren't built.")
+        logging.info("Min-max scaling data...")
+        self.min_max_scale("train")
+        self.min_max_scale("valid")
+        self.min_max_scale("test")
+        logging.info("Data min-max scaled")
+        return self
+
+    def p_normalize(self) -> Self:
+        if {"train", "valid", "test"}.symmetric_difference(self.data_loaders.keys()):
+            raise ValueError("Data loaders aren't built.")
+        logging.info("Normalizing data...")
+        self.normalize("train")
+        self.normalize("valid")
+        self.normalize("test")
+        logging.info("Data normalized")
+        return self
 
     def build_data_loader(self, subset: Subset) -> None:
+        if self.batch_size is None or self.num_workers is None:
+            raise ValueError
         self.data_loaders[subset] = DataLoader(
             self.subsets[subset],
             self.batch_size,
             shuffle=(subset == "train"),
-            num_workers=8,
+            num_workers=self.num_workers,
         )
+
+    def truncate(self, subset: Subset, n_sigma: int) -> None:
+        data_loader = self.data_loaders[subset]
+        pixel_mean, pixel_std = compute_mean_std(data_loader)
+        outlier = pixel_std * n_sigma
+        transform = torchvision.transforms.Lambda(
+            lambda image: image.clamp(-outlier, outlier)
+        )
+        self.subsets[subset] = TransformDataset(self.subsets[subset], transform)
+        self.build_data_loader(subset)
+        logging.debug(f"{subset}: range=({-outlier:.2f}, {outlier:.2f})")
+
+    def min_max_scale(self, subset: Subset) -> None:
+        data_loader = self.data_loaders[subset]
+        pixel_min, pixel_max = compute_min_max(data_loader)
+        loc = (pixel_max + pixel_min) / 2
+        scale = (pixel_max - pixel_min) / 2
+        scaler = torchvision.transforms.Normalize(loc, scale)
+        self.subsets[subset] = TransformDataset(self.subsets[subset], scaler)
+        self.build_data_loader(subset)
+        logging.debug(f"{subset}: min={pixel_min:.2f}, max={pixel_max:.2f}")
+
+    def normalize(self, subset: Subset) -> None:
+        data_loader = self.data_loaders[subset]
+        pixel_mean, pixel_std = compute_mean_std(data_loader)
+        normalizer = torchvision.transforms.Normalize(pixel_mean, pixel_std)
+        self.subsets[subset] = TransformDataset(self.subsets[subset], normalizer)
+        self.build_data_loader(subset)
+        logging.debug(f"{subset}: mean={pixel_mean:.2f}, std={pixel_std:.2f}")
 
     @abstractmethod
     def download_data(self, data_dir: Path) -> None:
@@ -206,8 +278,8 @@ def register_pipeline(name: str) -> Callable[[P], P]:
     return decorator
 
 
-def build_pipeline(name: str, batch_size: int) -> Pipeline:
+def build_pipeline(name: str) -> Pipeline:
     if name not in pipeline_registry:
         raise ValueError(f"Unregistered dataset: {name}")
     pipeline_cls = pipeline_registry[name]
-    return pipeline_cls(batch_size)
+    return pipeline_cls()

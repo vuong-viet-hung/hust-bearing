@@ -16,6 +16,7 @@ def main() -> None:
     parser.add_argument("--data", type=str, required=True)
     parser.add_argument("--data-dir", type=Path)
     parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument("--num-workers", type=int, default=8)
     parser.add_argument("--image-size", type=int, nargs=2, default=(64, 64))
     parser.add_argument("--seg-length", type=int, default=2048)
     parser.add_argument("--win-length", type=int, default=512)
@@ -27,7 +28,7 @@ def main() -> None:
     parser.add_argument("--num-epochs", type=int, default=10)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--gamma", type=float, default=0.5)
-    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--seed", type=int, default=21)
     parser.add_argument("--logging-level", type=str, default="info")
     args = parser.parse_args()
 
@@ -46,15 +47,16 @@ def main() -> None:
         level=getattr(logging, args.logging_level.upper()), format="%(message)s"
     )
 
-    pipeline = data.build_pipeline(args.data, args.batch_size)
+    pipeline = data.build_pipeline(args.data)
     (
-        pipeline.p_download_data(args.data_dir)
+        pipeline.p_download(args.data_dir)
         .p_build_dataset(
             args.image_size, args.seg_length, args.win_length, args.hop_length
         )
         .p_split_dataset(args.fractions)
-        .p_normalize_datasets()
-        .p_build_data_loaders()
+        .p_build_data_loaders(args.batch_size, args.num_workers)
+        .p_truncate(n_sigma=2)
+        .p_normalize()
     )
 
     model = models.build_model(args.model, pipeline.num_classes)
