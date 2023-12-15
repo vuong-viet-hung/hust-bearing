@@ -1,2 +1,2 @@
-from hust_bearing.data.core import build_pipeline
-import hust_bearing.data.cwru
+from hust_bearing.data.core import Pipeline, build_pipeline
+from hust_bearing.data.cwru import CWRUPipeline

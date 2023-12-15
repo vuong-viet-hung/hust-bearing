@@ -22,7 +22,7 @@ class SegmentSTFTs(Dataset):
     def __init__(
         self,
         data_file: Path,
-        label: int,
+        target: int,
         seg_length: int,
         win_length: int,
         hop_length: int,
@@ -30,7 +30,7 @@ class SegmentSTFTs(Dataset):
         transform: Callable[[np.ndarray], torch.Tensor],
     ) -> None:
         self.data_file = data_file
-        self.label = torch.tensor(label)
+        self.target = torch.tensor(target)
         self.seg_length = seg_length
         self.win_length = win_length
         self.hop_length = hop_length
@@ -53,7 +53,7 @@ class SegmentSTFTs(Dataset):
         amplitude = np.abs(stft)
         db = 20 * np.log10(amplitude)
         image = self.transform(db)
-        return image, self.label
+        return image, self.target
 
 
 class NormalizeDataset(Dataset):
@@ -117,9 +117,13 @@ class Pipeline(ABC):
         )
         data_files = self.list_data_files(self.data_dir)
         encoder = LabelEncoder()
-        labels = encoder.fit_transform([self.read_label(file) for file in data_files])
+        labels = [self.read_label(file) for file in data_files]
+        targets = encoder.fit_transform(labels)
         self.dataset = ConcatDataset(
-            [get_segment_stfts(file, label) for file, label in zip(data_files, labels)]
+            [
+                get_segment_stfts(file, target)
+                for file, target in zip(data_files, targets)
+            ]
         )
         return self
 

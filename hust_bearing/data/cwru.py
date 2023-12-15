@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import scipy
 
-from hust_bearing.data.pipeline import Pipeline, register_pipeline
+from hust_bearing.data.core import Pipeline, register_pipeline
 
 
 @register_pipeline("cwru")

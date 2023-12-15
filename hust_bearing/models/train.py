@@ -5,12 +5,18 @@ from pathlib import Path
 import torch
 
 from hust_bearing import data
+from hust_bearing import models
 
 
 def main() -> None:
+    default_device = "cuda" if torch.cuda.is_available() else "cpu"
+
     parser = ArgumentParser()
     parser.add_argument("--dataset-name", type=str, required=True)
     parser.add_argument("--data-dir", type=Path)
+    parser.add_argument("--device",  type=str, default=default_device)
+    parser.add_argument("--num-epochs", type=int, required=True)
+    parser.add_argument("--lr", type=float, default=1e-5)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--image-size", type=int, nargs=2, default=(64, 64))
     parser.add_argument("--seg-length", type=int, default=2048)
@@ -42,6 +48,18 @@ def main() -> None:
         .p_split_dataset(args.split_fractions)
         .p_normalize_datasets()
         .p_build_data_loaders()
+    )
+
+    model = models.LeNet5(num_classes=4)
+    loss_func = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), args.lr)
+    engine = models.Engine(model, args.device)
+    engine.train(
+        pipeline.data_loaders["train"],
+        pipeline.data_loaders["valid"],
+        args.num_epochs,
+        loss_func,
+        optimizer,
     )
 
 
