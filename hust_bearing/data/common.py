@@ -97,9 +97,6 @@ class DataPipeline(ABC):
     ) -> Self:
         if self.data_dir is None:
             raise PipelineError("Dataset hasn't been downloaded.")
-        data_files = self.list_data_files(self.data_dir)
-        encoder = LabelEncoder()
-        labels = encoder.fit_transform([self.read_label(file) for file in data_files])
         transform = torchvision.transforms.Compose(
             [
                 torchvision.transforms.ToTensor(),
@@ -114,6 +111,9 @@ class DataPipeline(ABC):
             loader=self.load_signal,
             transform=transform,
         )
+        data_files = self.list_data_files(self.data_dir)
+        encoder = LabelEncoder()
+        labels = encoder.fit_transform([self.read_label(file) for file in data_files])
         self.dataset = ConcatDataset(
             [get_segment_stfts(file, label) for file, label in zip(data_files, labels)]
         )
