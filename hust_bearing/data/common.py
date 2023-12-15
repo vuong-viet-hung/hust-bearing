@@ -18,10 +18,6 @@ class PipelineError(Exception):
     pass
 
 
-Loader = Callable[[Path], np.ndarray]
-Transform = Callable[[np.ndarray], torch.Tensor]
-
-
 class SegmentSTFTs(Dataset):
     def __init__(
         self,
@@ -30,8 +26,8 @@ class SegmentSTFTs(Dataset):
         seg_length: int,
         win_length: int,
         hop_length: int,
-        loader: Loader,
-        transform: Transform,
+        loader: Callable[[Path], np.ndarray],
+        transform: Callable[[np.ndarray], torch.Tensor],
     ) -> None:
         self.data_file = data_file
         self.label = torch.tensor(label)
