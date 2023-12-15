@@ -49,7 +49,9 @@ class Accuracy(Metric):
         batch_size = output_batch.shape[0]
         prediction_batch = output_batch.argmax(dim=1)
         self.num_samples += batch_size
-        self.num_accurate_samples += (prediction_batch == target_batch).sum().item()  # type: ignore
+        self.num_accurate_samples += int(
+            (prediction_batch == target_batch).sum().item()
+        )
 
     def reset(self) -> None:
         self.num_samples = 0

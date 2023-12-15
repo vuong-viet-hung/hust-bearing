@@ -22,7 +22,7 @@ class SizedDataset(Protocol):
         ...
 
 
-def is_sized_dataset(dataset: Dataset) -> TypeGuard[SizedDataset]:
+def is_sized(dataset: Dataset) -> TypeGuard[SizedDataset]:
     return hasattr(dataset, "__len__")
 
 
@@ -72,7 +72,7 @@ class NormalizeDataset(Dataset):
         self.normalizer = normalizer
 
     def __len__(self) -> int:
-        if is_sized_dataset(self.dataset):
+        if is_sized(self.dataset):
             return len(self.dataset)
         raise AttributeError
 
