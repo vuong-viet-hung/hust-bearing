@@ -9,12 +9,16 @@ from hust_bearing.data import build_data_pipeline
 
 def main() -> None:
     parser = ArgumentParser()
-    parser.add_argument("--dataset-name", type=str)
+    parser.add_argument("--dataset-name", type=str, required=True)
     parser.add_argument("--data-dir", type=Path)
     parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument("--image-size", type=int, nargs=2, default=(64, 64))
     parser.add_argument("--seg-length", type=int, default=2048)
     parser.add_argument("--win-length", type=int, default=256)
     parser.add_argument("--hop-length", type=int, default=64)
+    parser.add_argument(
+        "--split-fractions", type=float, nargs=3, default=(0.8, 0.1, 0.1)
+    )
     parser.add_argument("--seed", type=int, default=21)
     parser.add_argument("--logging-level", type=str, default="info")
     args = parser.parse_args()
@@ -29,12 +33,13 @@ def main() -> None:
         data_root_dir.mkdir(exist_ok=True)
         args.data_dir = data_root_dir / args.dataset_name
 
-    image_size = (64, 64)
     data_pipeline = build_data_pipeline(args.dataset_name, args.batch_size)
     (
         data_pipeline.p_download_data(args.data_dir)
-        .p_build_dataset(image_size, args.seg_length, args.win_length, args.hop_length)
-        .p_split_dataset((0.8, 0.1, 0.1))
+        .p_build_dataset(
+            args.image_size, args.seg_length, args.win_length, args.hop_length
+        )
+        .p_split_dataset(args.split_fractions)
         .p_normalize_datasets()
         .p_build_data_loaders()
     )

@@ -86,7 +86,7 @@ class DataPipeline(ABC):
     def p_download_data(self, data_dir: Path) -> Self:
         self.data_dir = data_dir
         if data_dir.exists():
-            logging.info(f"Dataset is already downloaded at '{data_dir}'.")
+            logging.info(f"Dataset is already downloaded to '{data_dir}'.")
             return self
         logging.info(f"Downloading dataset to '{data_dir}'...")
         self.download_data(data_dir)
