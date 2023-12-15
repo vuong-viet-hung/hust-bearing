@@ -75,7 +75,7 @@ class NormalizeDataset(Dataset):
 Subset = Literal["train", "valid", "test"]
 
 
-class DataPipeline(ABC):
+class Pipeline(ABC):
     def __init__(self, batch_size: int) -> None:
         self.batch_size = batch_size
         self.data_dir: Path | None = None
@@ -185,20 +185,20 @@ class DataPipeline(ABC):
         pass
 
 
-P = TypeVar("P", bound=type[DataPipeline])
-data_pipeline_registry: dict[str, type[DataPipeline]] = {}
+P = TypeVar("P", bound=type[Pipeline])
+pipeline_registry: dict[str, type[Pipeline]] = {}
 
 
-def register_data_pipeline(dataset_name: str) -> Callable[[P], P]:
-    def decorator(data_pipeline_cls: P) -> P:
-        data_pipeline_registry[dataset_name] = data_pipeline_cls
-        return data_pipeline_cls
+def register_pipeline(dataset_name: str) -> Callable[[P], P]:
+    def decorator(pipeline_cls: P) -> P:
+        pipeline_registry[dataset_name] = pipeline_cls
+        return pipeline_cls
 
     return decorator
 
 
-def build_data_pipeline(dataset_name: str, batch_size: int) -> DataPipeline:
-    if dataset_name not in data_pipeline_registry:
+def build_pipeline(dataset_name: str, batch_size: int) -> Pipeline:
+    if dataset_name not in pipeline_registry:
         raise ValueError(f"Unregistered dataset: '{dataset_name}'")
-    data_pipeline_cls = data_pipeline_registry[dataset_name]
-    return data_pipeline_cls(batch_size)
+    pipeline_cls = pipeline_registry[dataset_name]
+    return pipeline_cls(batch_size)

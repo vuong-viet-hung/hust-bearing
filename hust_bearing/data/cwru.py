@@ -7,11 +7,11 @@ from pathlib import Path
 import numpy as np
 import scipy
 
-from hust_bearing.data.common import DataPipeline, register_data_pipeline
+from hust_bearing.data.pipeline import Pipeline, register_pipeline
 
 
-@register_data_pipeline("cwru")
-class CWRUPipeline(DataPipeline):
+@register_pipeline("cwru")
+class CWRUPipeline(Pipeline):
     def download_data(self, data_dir: Path) -> None:
         download_url = (
             "https://github.com/XiongMeijing/CWRU-1/archive/refs/heads/master.zip"

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import torch
 
-from hust_bearing.data import build_data_pipeline
+from hust_bearing.data.pipeline import build_pipeline
 
 
 def main() -> None:
@@ -33,9 +33,9 @@ def main() -> None:
         data_root_dir.mkdir(exist_ok=True)
         args.data_dir = data_root_dir / args.dataset_name
 
-    data_pipeline = build_data_pipeline(args.dataset_name, args.batch_size)
+    pipeline = build_pipeline(args.dataset_name, args.batch_size)
     (
-        data_pipeline.p_download_data(args.data_dir)
+        pipeline.p_download_data(args.data_dir)
         .p_build_dataset(
             args.image_size, args.seg_length, args.win_length, args.hop_length
         )
