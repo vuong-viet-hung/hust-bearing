@@ -225,7 +225,6 @@ class Pipeline(ABC):
         data_loader = self.data_loaders[subset]
         if subset == "train":
             self.pixel_mean, self.pixel_std = compute_mean_std(data_loader)
-            logging.debug(f"mean={self.pixel_mean:.2f}, std={self.pixel_std:.2f}")
         outlier = self.pixel_std * n_sigma
         transform = torchvision.transforms.Lambda(
             lambda image: image.clamp(-outlier, outlier)
@@ -237,7 +236,6 @@ class Pipeline(ABC):
         data_loader = self.data_loaders[subset]
         if subset == "train":
             self.pixel_min, self.pixel_max = compute_min_max(data_loader)
-            logging.debug(f"min={self.pixel_min:.2f}, max={self.pixel_max:.2f}")
         loc = (self.pixel_max + self.pixel_min) / 2
         scale = (self.pixel_max - self.pixel_min) / 2
         scaler = torchvision.transforms.Normalize(loc, scale)
@@ -248,7 +246,6 @@ class Pipeline(ABC):
         data_loader = self.data_loaders[subset]
         if subset == "train":
             self.pixel_mean, self.pixel_std = compute_mean_std(data_loader)
-            logging.debug(f"mean={self.pixel_mean:.2f}, std={self.pixel_std:.2f}")
         normalizer = torchvision.transforms.Normalize(self.pixel_mean, self.pixel_std)
         self.subsets[subset] = TransformDataset(self.subsets[subset], normalizer)
         self.build_data_loader(subset)
