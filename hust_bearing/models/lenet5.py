@@ -20,10 +20,10 @@ class LeNet5(nn.Module):
         self.flatten = nn.Flatten()
 
         self.fc1 = nn.Linear(16 * 13 * 13, 120)
-        self.dropout1 = nn.Dropout(0.5)
+        self.dropout1 = nn.Dropout(0.75)
 
         self.fc2 = nn.Linear(120, 84)
-        self.dropout2 = nn.Dropout(0.5)
+        self.dropout2 = nn.Dropout(0.75)
 
         self.fc3 = nn.Linear(84, num_classes)
 

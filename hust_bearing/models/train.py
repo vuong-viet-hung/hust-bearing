@@ -13,7 +13,7 @@ def main() -> None:
     default_device = "cuda" if torch.cuda.is_available() else "cpu"
 
     parser = ArgumentParser()
-    parser.add_argument("--dataset", type=str, required=True)
+    parser.add_argument("--data", type=str, required=True)
     parser.add_argument("--data-dir", type=Path)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--image-size", type=int, nargs=2, default=(64, 64))
@@ -34,10 +34,10 @@ def main() -> None:
     if args.data_dir is None:
         data_root_dir = Path("data")
         data_root_dir.mkdir(exist_ok=True)
-        args.data_dir = data_root_dir / args.dataset
+        args.data_dir = data_root_dir / args.data
 
     if args.model_file is None:
-        model_dir = Path("models") / args.dataset
+        model_dir = Path("models") / args.data
         model_dir.mkdir(parents=True, exist_ok=True)
         args.model_file = (model_dir / args.model).with_suffix(".pth")
 
@@ -46,13 +46,13 @@ def main() -> None:
         level=getattr(logging, args.logging_level.upper()), format="%(message)s"
     )
 
-    pipeline = data.build_pipeline(args.dataset, args.batch_size)
+    pipeline = data.build_pipeline(args.data, args.batch_size)
     (
         pipeline.p_download_data(args.data_dir)
         .p_build_dataset(
             args.image_size, args.seg_length, args.win_length, args.hop_length
         )
-        .p_split_dataset(args.split_fractions)
+        .p_split_dataset(args.fractions)
         .p_normalize_datasets()
         .p_build_data_loaders()
     )
