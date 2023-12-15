@@ -83,7 +83,6 @@ class NormalizeDataset(Dataset):
 
 
 Subset = Literal["train", "valid", "test"]
-T = TypeVar("T")
 
 
 class Pipeline(ABC):
