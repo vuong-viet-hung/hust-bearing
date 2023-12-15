@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 import torch
-from torch import nn
+from torch import nn, optim
 from torch.utils.data import DataLoader
 from tqdm.auto import trange, tqdm
 
@@ -61,14 +62,28 @@ class Accuracy(Metric):
         return self.num_accurate_samples / self.num_samples
 
 
+class BestModelSaver:
+    def __init__(self) -> None:
+        self.min_loss: float = float("inf")
+
+    def save(self, model: nn.Module, loss: float, saved_model: Path) -> None:
+        if self.min_loss <= loss:
+            return
+        self.min_loss = loss
+        torch.save(model.state_dict(), saved_model)
+
+
 class Engine:
-    def __init__(self, model: nn.Module, device: str) -> None:
+    def __init__(self, model: nn.Module, device: str, saved_model: Path) -> None:
         self.model = model.to(device)
         self.device = device
+        self.saved_model: Path = saved_model
         self.loss_func: nn.Module | None = None
-        self.optimizer: torch.optim.Optimizer | None = None
+        self.optimizer: optim.Optimizer | None = None
+        self.lr_scheduler: optim.lr_scheduler.LRScheduler | None = None
         self.loss: Loss | None = None
         self.accuracy: Accuracy = Accuracy()
+        self.best_model_saver = BestModelSaver()
 
     def train(
         self,
@@ -76,25 +91,32 @@ class Engine:
         valid_dl: DataLoader,
         num_epochs: int,
         loss_func: nn.Module,
-        optimizer: torch.optim.Optimizer,
+        optimizer: optim.Optimizer,
+        lr_scheduler: optim.lr_scheduler.LRScheduler | None = None,
     ) -> None:
         self.loss_func = loss_func
         self.loss = Loss(loss_func)
         self.optimizer = optimizer
+        self.lr_scheduler = lr_scheduler
         for _ in trange(num_epochs):
             self.train_one_epoch(train_dl)
             self.valid_one_step(valid_dl)
 
     def train_one_epoch(self, train_dl: DataLoader) -> None:
-        if self.loss is None:
+        if self.loss is None or self.optimizer is None:
             raise ValueError("Loss or optimizer isn't initialized.")
         prog_bar = tqdm(train_dl)
         self.model.train()
+        lr = self.optimizer.param_groups[0]["lr"]
         for input_batch, target_batch in prog_bar:
             self.train_one_step(input_batch, target_batch)
             prog_bar.set_description(
                 f"train: loss={self.loss.compute():.4f}, acc={self.accuracy.compute():.4f}"
+                f" | lr={lr:.2e}"
             )
+        if self.lr_scheduler is not None:
+            self.lr_scheduler.step()
+        self.best_model_saver.save(self.model, self.loss.compute(), self.saved_model)
         self.loss.reset()
         self.accuracy.reset()
 
@@ -141,8 +163,7 @@ class Engine:
     def test(self, test_dl: DataLoader, loss_func: nn.Module) -> None:
         self.loss_func = loss_func
         self.loss = Loss(loss_func)
-        if self.loss is None:
-            raise ValueError("Loss or optimizer isn't initialized.")
+        self.model.load_state_dict(torch.load(self.saved_model))
         prog_bar = tqdm(test_dl)
         self.model.eval()
         for input_batch, target_batch in prog_bar:
@@ -155,6 +176,7 @@ class Engine:
 
     @torch.no_grad()
     def predict(self, predict_dl: DataLoader) -> torch.Tensor:
+        self.model.load_state_dict(torch.load(self.saved_model))
         self.model.eval()
         return torch.cat(
             [self.predict_one_batch(input_batch) for input_batch, *_ in predict_dl]
