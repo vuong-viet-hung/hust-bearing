@@ -6,7 +6,6 @@ from typing import Callable, Literal, Protocol, TypeGuard, TypeVar
 from typing_extensions import Self
 
 import numpy as np
-import scipy
 import torchvision
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
@@ -53,14 +52,12 @@ class SegmentSTFTs(Dataset):
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         signal = self.loader(self.data_file)
         segment = signal[idx * self.seg_length : (idx + 1) * self.seg_length]
-        *_, stft = scipy.signal.stft(
-            segment,
-            nperseg=self.win_length,
-            noverlap=(self.win_length - self.hop_length),
+        stft = torch.stft(
+            torch.tensor(segment), self.win_length, self.hop_length, return_complex=True
         )
-        amplitude = np.abs(stft)
-        db = 20 * np.log10(amplitude)
-        image = self.transform(db)
+        amplitude = stft.abs()
+        db = 20 * amplitude.log10()
+        image = self.transform(db.unsqueeze(dim=0))
         return image, self.target
 
 
@@ -95,12 +92,11 @@ class Pipeline(ABC):
         self.data_loaders: dict[Subset, DataLoader] = {}
 
     def p_download_data(self, data_dir: Path) -> Self:
+        if not data_dir.exists():
+            logging.info(f"Downloading data to '{data_dir}'...")
+            self.download_data(data_dir)
+        logging.info(f"Data downloaded at '{data_dir}'")
         self.data_dir = data_dir
-        if data_dir.exists():
-            logging.info(f"Dataset is downloaded to '{data_dir}'.")
-            return self
-        logging.info(f"Downloading dataset to '{data_dir}'...")
-        self.download_data(data_dir)
         return self
 
     def p_build_dataset(
@@ -111,20 +107,14 @@ class Pipeline(ABC):
         hop_length: int,
     ) -> Self:
         if self.data_dir is None:
-            raise ValueError("Dataset isn't downloaded.")
-        transform = torchvision.transforms.Compose(
-            [
-                torchvision.transforms.ToTensor(),
-                torchvision.transforms.Resize(image_size, antialias=None),
-            ]
-        )
+            raise ValueError("Data isn't downloaded.")
         get_segment_stfts = functools.partial(
             SegmentSTFTs,
             seg_length=seg_length,
             win_length=win_length,
             hop_length=hop_length,
             loader=self.load_signal,
-            transform=transform,
+            transform=torchvision.transforms.Resize(image_size, antialias=None),
         )
         data_files = self.list_data_files(self.data_dir)
         encoder = LabelEncoder()
@@ -152,9 +142,11 @@ class Pipeline(ABC):
     def p_normalize_datasets(self) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.subsets.keys()):
             raise ValueError("Dataset isn't built or split.")
+        logging.info("Preprocessing data...")
         self.normalize_subset("train")
         self.normalize_subset("valid")
         self.normalize_subset("test")
+        logging.info("Data preprocessed")
         return self
 
     def p_build_data_loaders(self) -> Self:
@@ -168,12 +160,10 @@ class Pipeline(ABC):
     def normalize_subset(self, subset: Subset) -> None:
         pixel_min = float("inf")
         pixel_max = float("-inf")
-        data_loader = DataLoader(self.subsets[subset], self.batch_size)
-
+        data_loader = DataLoader(self.subsets[subset], self.batch_size, num_workers=8)
         for image_batch, _ in data_loader:
             pixel_min = min(pixel_min, image_batch.min())
             pixel_max = max(pixel_max, image_batch.max())
-
         loc = (pixel_max + pixel_min) / 2
         scale = (pixel_max - pixel_min) / 2
         normalizer = torchvision.transforms.Normalize(loc, scale)
@@ -181,7 +171,10 @@ class Pipeline(ABC):
 
     def build_data_loader(self, subset: Subset) -> None:
         self.data_loaders[subset] = DataLoader(
-            self.subsets[subset], self.batch_size, shuffle=(subset == "train")
+            self.subsets[subset],
+            self.batch_size,
+            shuffle=(subset == "train"),
+            num_workers=8,
         )
 
     @abstractmethod
