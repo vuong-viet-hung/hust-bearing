@@ -12,7 +12,7 @@ from hust_bearing.data.core import Pipeline, register_pipeline
 
 @register_pipeline("cwru")
 class CWRUPipeline(Pipeline):
-    def download_data(self, data_dir: Path) -> None:
+    def download(self, data_dir: Path) -> None:
         download_url = (
             "https://github.com/XiongMeijing/CWRU-1/archive/refs/heads/master.zip"
         )

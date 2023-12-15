@@ -13,7 +13,7 @@ import scipy
 
 @register_pipeline("hust")
 class HUSTBearingPipeline(Pipeline):
-    def download_data(self, data_dir: Path) -> None:
+    def download(self, data_dir: Path) -> None:
         download_url = "https://prod-dcd-datasets-cache-zipfiles.s3.eu-west-1.amazonaws.com/cbv7jyx4p9-3.zip"
         download_zip_file = Path(
             "HUST bearing a practical dataset for ball bearing fault diagnosis.zip"

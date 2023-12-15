@@ -125,7 +125,7 @@ class Pipeline(ABC):
     def p_download(self, data_dir: Path) -> Self:
         if not data_dir.exists():
             logging.info(f"Downloading data to '{data_dir}'...")
-            self.download_data(data_dir)
+            self.download(data_dir)
         logging.info(f"Data downloaded at '{data_dir}'")
         self.data_dir = data_dir
         return self
@@ -250,7 +250,7 @@ class Pipeline(ABC):
         logging.debug(f"{subset}: mean={pixel_mean:.2f}, std={pixel_std:.2f}")
 
     @abstractmethod
-    def download_data(self, data_dir: Path) -> None:
+    def download(self, data_dir: Path) -> None:
         pass
 
     @abstractmethod
