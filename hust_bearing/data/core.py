@@ -2,7 +2,7 @@ import functools
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Callable, Literal, TypeVar
+from typing import Callable, Literal, Protocol, TypeGuard, TypeVar
 from typing_extensions import Self
 
 import numpy as np
@@ -14,8 +14,16 @@ from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
 import torch
 
 
-class PipelineError(Exception):
-    pass
+class SizedDataset(Protocol):
+    def __len__(self) -> int:
+        ...
+
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
+        ...
+
+
+def is_sized_dataset(dataset: Dataset) -> TypeGuard[SizedDataset]:
+    return hasattr(dataset, "__len__")
 
 
 class SegmentSTFTs(Dataset):
@@ -64,7 +72,9 @@ class NormalizeDataset(Dataset):
         self.normalizer = normalizer
 
     def __len__(self) -> int:
-        return len(self.dataset)  # type: ignore
+        if is_sized_dataset(self.dataset):
+            return len(self.dataset)
+        raise AttributeError
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         image, label = self.dataset[idx]
@@ -73,6 +83,7 @@ class NormalizeDataset(Dataset):
 
 
 Subset = Literal["train", "valid", "test"]
+T = TypeVar("T")
 
 
 class Pipeline(ABC):
@@ -86,7 +97,7 @@ class Pipeline(ABC):
     def p_download_data(self, data_dir: Path) -> Self:
         self.data_dir = data_dir
         if data_dir.exists():
-            logging.info(f"Dataset is already downloaded to '{data_dir}'.")
+            logging.info(f"Dataset is downloaded to '{data_dir}'.")
             return self
         logging.info(f"Downloading dataset to '{data_dir}'...")
         self.download_data(data_dir)
@@ -100,7 +111,7 @@ class Pipeline(ABC):
         hop_length: int,
     ) -> Self:
         if self.data_dir is None:
-            raise PipelineError("Dataset hasn't been downloaded.")
+            raise ValueError("Dataset isn't downloaded.")
         transform = torchvision.transforms.Compose(
             [
                 torchvision.transforms.ToTensor(),
@@ -129,7 +140,7 @@ class Pipeline(ABC):
 
     def p_split_dataset(self, split_fractions: tuple[float, float, float]) -> Self:
         if self.dataset is None:
-            raise PipelineError("Dataset hasn't been built.")
+            raise ValueError("Dataset isn't built.")
         (
             self.subsets["train"],
             self.subsets["valid"],
@@ -139,7 +150,7 @@ class Pipeline(ABC):
 
     def p_normalize_datasets(self) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.subsets.keys()):
-            raise PipelineError("Dataset hasn't been built or split.")
+            raise ValueError("Dataset isn't built or split.")
         self.normalize_subset("train")
         self.normalize_subset("valid")
         self.normalize_subset("test")
@@ -147,7 +158,7 @@ class Pipeline(ABC):
 
     def p_build_data_loaders(self) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.subsets.keys()):
-            raise PipelineError("Dataset hasn't been built or split.")
+            raise ValueError("Dataset isn't built or split.")
         self.build_data_loader("train")
         self.build_data_loader("valid")
         self.build_data_loader("test")
@@ -203,6 +214,6 @@ def register_pipeline(dataset_name: str) -> Callable[[P], P]:
 
 def build_pipeline(dataset_name: str, batch_size: int) -> Pipeline:
     if dataset_name not in pipeline_registry:
-        raise ValueError(f"Unregistered dataset: '{dataset_name}'")
+        raise ValueError(f"Unregistered dataset: {dataset_name}")
     pipeline_cls = pipeline_registry[dataset_name]
     return pipeline_cls(batch_size)

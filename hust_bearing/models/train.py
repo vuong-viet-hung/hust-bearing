@@ -14,7 +14,7 @@ def main() -> None:
     parser = ArgumentParser()
     parser.add_argument("--dataset-name", type=str, required=True)
     parser.add_argument("--data-dir", type=Path)
-    parser.add_argument("--device",  type=str, default=default_device)
+    parser.add_argument("--device", type=str, default=default_device)
     parser.add_argument("--num-epochs", type=int, required=True)
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--batch-size", type=int, default=32)
@@ -50,7 +50,7 @@ def main() -> None:
         .p_build_data_loaders()
     )
 
-    model = models.LeNet5(num_classes=4)
+    model = models.LeNet5(num_classes=4, in_channels=1)
     loss_func = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), args.lr)
     engine = models.Engine(model, args.device)

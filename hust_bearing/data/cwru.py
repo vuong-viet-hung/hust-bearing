@@ -33,7 +33,7 @@ class CWRUPipeline(Pipeline):
         return normal_data_files + fault_data_files
 
     def read_label(self, data_file: Path) -> str:
-        return re.fullmatch(  # type: ignore
+        match = re.fullmatch(
             r"""
             ([a-zA-Z]+)  # Fault
             (\d{3})?  # Fault size
@@ -44,7 +44,10 @@ class CWRUPipeline(Pipeline):
             """,
             data_file.name,
             re.VERBOSE,
-        ).group(1)
+        )
+        if match is None:
+            raise ValueError(f"Invalid file name: {data_file.name}")
+        return match.group(1)
 
     def load_signal(self, data_file: Path) -> np.ndarray:
         data = scipy.io.loadmat(str(data_file))

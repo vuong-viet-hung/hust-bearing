@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import torch
+from torch import nn
 from torch.utils.data import DataLoader
 from tqdm.auto import trange, tqdm
 
@@ -21,7 +22,7 @@ class Metric(ABC):
 
 
 class Loss(Metric):
-    def __init__(self, loss_func: torch.nn.Module) -> None:
+    def __init__(self, loss_func: nn.Module) -> None:
         self.loss_func = loss_func
         self.num_samples: int = 0
         self.loss_sum: float = 0.0
@@ -59,10 +60,10 @@ class Accuracy(Metric):
 
 
 class Engine:
-    def __init__(self, model: torch.nn.Module, device: str) -> None:
+    def __init__(self, model: nn.Module, device: str) -> None:
         self.model = model.to(device)
         self.device = device
-        self.loss_func: torch.nn.Module | None = None
+        self.loss_func: nn.Module | None = None
         self.optimizer: torch.optim.Optimizer | None = None
         self.loss: Loss | None = None
         self.accuracy: Accuracy = Accuracy()
@@ -72,7 +73,7 @@ class Engine:
         train_dl: DataLoader,
         valid_dl: DataLoader,
         num_epochs: int,
-        loss_func: torch.nn.Module,
+        loss_func: nn.Module,
         optimizer: torch.optim.Optimizer,
     ) -> None:
         self.loss_func = loss_func
@@ -83,6 +84,8 @@ class Engine:
             self.eval_one_epoch(valid_dl)
 
     def train_one_epoch(self, train_dl: DataLoader) -> None:
+        if self.loss is None:
+            raise ValueError("Loss or optimizer isn't initialized.")
         prog_bar = tqdm(train_dl)
         self.model.train()
         for input_batch, target_batch in prog_bar:
@@ -96,6 +99,8 @@ class Engine:
     def train_one_step(
         self, input_batch: torch.Tensor, target_batch: torch.Tensor
     ) -> None:
+        if self.loss_func is None or self.loss is None or self.optimizer is None:
+            raise ValueError("Loss or optimizer isn't initialized.")
         input_batch = input_batch.to(self.device)
         target_batch = target_batch.to(self.device)
         output_batch = self.model(input_batch)
@@ -108,6 +113,8 @@ class Engine:
 
     @torch.no_grad()
     def eval_one_epoch(self, valid_dl: DataLoader) -> None:
+        if self.loss is None:
+            raise ValueError("Loss or optimizer isn't initialized.")
         prog_bar = tqdm(valid_dl)
         self.model.eval()
         for input_batch, target_batch in prog_bar:
@@ -121,13 +128,15 @@ class Engine:
     def eval_one_step(
         self, input_batch: torch.Tensor, target_batch: torch.Tensor
     ) -> None:
+        if self.loss is None:
+            raise ValueError("Loss or optimizer isn't initialized.")
         input_batch = input_batch.to(self.device)
         target_batch = target_batch.to(self.device)
         output_batch = self.model(input_batch)
         self.loss.update(output_batch, target_batch)
         self.accuracy.update(output_batch, target_batch)
 
-    def test(self, test_dl: DataLoader, loss_func: torch.nn.Module) -> None:
+    def test(self, test_dl: DataLoader, loss_func: nn.Module) -> None:
         self.loss_func = loss_func
         self.loss = Loss(loss_func)
         self.eval_one_epoch(test_dl)
