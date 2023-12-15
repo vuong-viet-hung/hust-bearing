@@ -18,15 +18,6 @@ Loader = Callable[[Path], np.ndarray]
 Transform = Callable[[np.ndarray], torch.Tensor]
 
 
-def get_transform() -> Transform:
-    return torchvision.transforms.Compose(
-        [
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Resize((64, 64), antialias=None),
-        ]
-    )
-
-
 class PipelineError(Exception):
     pass
 
@@ -113,13 +104,19 @@ class DataPipeline(ABC):
         data_files = self.list_data_files(self.data_dir)
         encoder = LabelEncoder()
         labels = encoder.fit_transform([self.read_label(file) for file in data_files])
+        transform = torchvision.transforms.Compose(
+            [
+                torchvision.transforms.ToTensor(),
+                torchvision.transforms.Resize((64, 64), antialias=None),
+            ]
+        )
         get_segment_stfts = functools.partial(
             SegmentSTFTs,
             seg_length=seg_length,
             win_length=win_length,
             hop_length=hop_length,
             loader=self.load_signal,
-            transform=get_transform(),
+            transform=transform,
         )
         self.dataset = ConcatDataset(
             [get_segment_stfts(file, label) for file, label in zip(data_files, labels)]
@@ -200,7 +197,7 @@ def register_data_pipeline(dataset_name: str) -> Callable[[P], P]:
     return decorator
 
 
-def get_data_pipeline(dataset_name: str, batch_size: int) -> DataPipeline:
+def build_data_pipeline(dataset_name: str, batch_size: int) -> DataPipeline:
     if dataset_name not in data_pipeline_registry:
         raise ValueError(f"Unregistered dataset: '{dataset_name}'")
     data_pipeline_cls = data_pipeline_registry[dataset_name]
