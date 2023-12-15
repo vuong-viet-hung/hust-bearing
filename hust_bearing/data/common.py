@@ -14,12 +14,12 @@ from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
 import torch
 
 
-Loader = Callable[[Path], np.ndarray]
-Transform = Callable[[np.ndarray], torch.Tensor]
-
-
 class PipelineError(Exception):
     pass
+
+
+Loader = Callable[[Path], np.ndarray]
+Transform = Callable[[np.ndarray], torch.Tensor]
 
 
 class SegmentSTFTs(Dataset):
