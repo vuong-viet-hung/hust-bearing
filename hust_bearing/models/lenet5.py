@@ -1,12 +1,15 @@
 import torch
 import torch.nn as nn
 
+from hust_bearing.models.core import register_model
 
+
+@register_model("lenet5")
 class LeNet5(nn.Module):
-    def __init__(self, in_channels: int, num_classes: int) -> None:
+    def __init__(self, num_classes: int) -> None:
         super(LeNet5, self).__init__()
 
-        self.conv1 = nn.Conv2d(in_channels, 6, kernel_size=5)
+        self.conv1 = nn.Conv2d(1, 6, kernel_size=5)
         self.relu1 = nn.ReLU()
         self.pool1 = nn.MaxPool2d(kernel_size=2)
 

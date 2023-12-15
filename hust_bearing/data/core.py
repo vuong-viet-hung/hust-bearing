@@ -91,6 +91,7 @@ class Pipeline(ABC):
         self.batch_size = batch_size
         self.data_dir: Path | None = None
         self.dataset: Dataset | None = None
+        self.num_classes: int = 0
         self.subsets: dict[Subset, Dataset] = {}
         self.data_loaders: dict[Subset, DataLoader] = {}
 
@@ -129,6 +130,7 @@ class Pipeline(ABC):
         data_files = self.list_data_files(self.data_dir)
         encoder = LabelEncoder()
         labels = [self.read_label(file) for file in data_files]
+        self.num_classes = len(np.unique(labels))
         targets = encoder.fit_transform(labels)
         self.dataset = ConcatDataset(
             [
@@ -204,16 +206,16 @@ P = TypeVar("P", bound=type[Pipeline])
 pipeline_registry: dict[str, type[Pipeline]] = {}
 
 
-def register_pipeline(dataset_name: str) -> Callable[[P], P]:
+def register_pipeline(name: str) -> Callable[[P], P]:
     def decorator(pipeline_cls: P) -> P:
-        pipeline_registry[dataset_name] = pipeline_cls
+        pipeline_registry[name] = pipeline_cls
         return pipeline_cls
 
     return decorator
 
 
-def build_pipeline(dataset_name: str, batch_size: int) -> Pipeline:
-    if dataset_name not in pipeline_registry:
-        raise ValueError(f"Unregistered dataset: {dataset_name}")
-    pipeline_cls = pipeline_registry[dataset_name]
+def build_pipeline(name: str, batch_size: int) -> Pipeline:
+    if name not in pipeline_registry:
+        raise ValueError(f"Unregistered dataset: {name}")
+    pipeline_cls = pipeline_registry[name]
     return pipeline_cls(batch_size)

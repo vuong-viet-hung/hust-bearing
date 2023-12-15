@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Callable, TypeVar
 
 import torch
 from torch import nn, optim
@@ -62,28 +63,17 @@ class Accuracy(Metric):
         return self.num_accurate_samples / self.num_samples
 
 
-class BestModelSaver:
-    def __init__(self) -> None:
-        self.min_loss: float = float("inf")
-
-    def save(self, model: nn.Module, loss: float, saved_model: Path) -> None:
-        if self.min_loss <= loss:
-            return
-        self.min_loss = loss
-        torch.save(model.state_dict(), saved_model)
-
-
 class Engine:
-    def __init__(self, model: nn.Module, device: str, saved_model: Path) -> None:
+    def __init__(self, model: nn.Module, device: str, model_file: Path) -> None:
         self.model = model.to(device)
         self.device = device
-        self.saved_model: Path = saved_model
+        self.model_file: Path = model_file
         self.loss_func: nn.Module | None = None
         self.optimizer: optim.Optimizer | None = None
         self.lr_scheduler: optim.lr_scheduler.LRScheduler | None = None
         self.loss: Loss | None = None
         self.accuracy: Accuracy = Accuracy()
-        self.best_model_saver = BestModelSaver()
+        self.min_loss: float = float("inf")
 
     def train(
         self,
@@ -114,9 +104,11 @@ class Engine:
                 f"train: loss={self.loss.compute():.4f}, acc={self.accuracy.compute():.4f}"
                 f" | lr={lr:.2e}"
             )
+        if self.min_loss > self.loss.compute():
+            self.min_loss = self.loss.compute()
+            torch.save(self.model.state_dict(), self.model_file)
         if self.lr_scheduler is not None:
             self.lr_scheduler.step()
-        self.best_model_saver.save(self.model, self.loss.compute(), self.saved_model)
         self.loss.reset()
         self.accuracy.reset()
 
@@ -163,7 +155,7 @@ class Engine:
     def test(self, test_dl: DataLoader, loss_func: nn.Module) -> None:
         self.loss_func = loss_func
         self.loss = Loss(loss_func)
-        self.model.load_state_dict(torch.load(self.saved_model))
+        self.model.load_state_dict(torch.load(self.model_file))
         prog_bar = tqdm(test_dl)
         self.model.eval()
         for input_batch, target_batch in prog_bar:
@@ -176,7 +168,7 @@ class Engine:
 
     @torch.no_grad()
     def predict(self, predict_dl: DataLoader) -> torch.Tensor:
-        self.model.load_state_dict(torch.load(self.saved_model))
+        self.model.load_state_dict(torch.load(self.model_file))
         self.model.eval()
         return torch.cat(
             [self.predict_one_batch(input_batch) for input_batch, *_ in predict_dl]
@@ -184,3 +176,22 @@ class Engine:
 
     def predict_one_batch(self, input_batch) -> torch.Tensor:
         return self.model(input_batch.to(self.device)).argmax(dim=1)
+
+
+M = TypeVar("M", bound=nn.Module)
+model_registry: dict[str, type[nn.Module]] = {}
+
+
+def register_model(name: str) -> Callable[[type[M]], type[M]]:
+    def decorator(model_cls: type[M]) -> type[M]:
+        model_registry[name] = model_cls
+        return model_cls
+
+    return decorator
+
+
+def build_model(name: str, num_classes: int) -> nn.Module:
+    if name not in model_registry:
+        raise ValueError(f"Unregistered model: {name}")
+    model_cls = model_registry[name]
+    return model_cls(num_classes)
