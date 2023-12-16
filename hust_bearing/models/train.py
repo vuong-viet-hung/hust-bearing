@@ -11,12 +11,13 @@ from hust_bearing import models
 
 
 def main(args: argparse.Namespace) -> None:
-
+    # Create default directory for data
     if args.data_dir is None:
         data_root_dir = Path("data")
         data_root_dir.mkdir(exist_ok=True)
         args.data_dir = data_root_dir / args.data
 
+    # Create default directory for saved model
     if args.model_file is None:
         model_dir = Path("models") / args.data
         model_dir.mkdir(parents=True, exist_ok=True)
@@ -27,6 +28,7 @@ def main(args: argparse.Namespace) -> None:
         level=getattr(logging, args.logging_level.upper()), format="%(message)s"
     )
 
+    # Preprocess data
     pipeline = data.build_pipeline(args.data)
     (
         pipeline.download(args.data_dir)
@@ -38,6 +40,7 @@ def main(args: argparse.Namespace) -> None:
         .normalize()
     )
 
+    # Train and evaluate model
     num_classes = len(pipeline.label_encoder.classes_)
     model = models.build_model(args.model, num_classes)
     loss_func = nn.CrossEntropyLoss()
