@@ -1,3 +1,4 @@
+import argparse
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
@@ -9,27 +10,7 @@ from hust_bearing import data
 from hust_bearing import models
 
 
-def main() -> None:
-    default_device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    parser = ArgumentParser()
-    parser.add_argument("--data", type=str, required=True)
-    parser.add_argument("--data-dir", type=Path)
-    parser.add_argument("--batch-size", type=int, default=32)
-    parser.add_argument("--num-workers", type=int, default=8)
-    parser.add_argument("--image-size", type=int, nargs=2, default=(64, 64))
-    parser.add_argument("--seg-length", type=int, default=2048)
-    parser.add_argument("--win-length", type=int, default=512)
-    parser.add_argument("--hop-length", type=int, default=128)
-    parser.add_argument("--fractions", type=float, nargs=3, default=(0.8, 0.1, 0.1))
-    parser.add_argument("--model", type=str, required=True)
-    parser.add_argument("--device", type=str, default=default_device)
-    parser.add_argument("--model-file", type=Path)
-    parser.add_argument("--num-epochs", type=int, default=10)
-    parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--seed", type=int, default=0)
-    parser.add_argument("--logging-level", type=str, default="info")
-    args = parser.parse_args()
+def main(args: argparse.Namespace) -> None:
 
     if args.data_dir is None:
         data_root_dir = Path("data")
@@ -77,4 +58,22 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    default_device = "cuda" if torch.cuda.is_available() else "cpu"
+    parser = ArgumentParser()
+    parser.add_argument("--data", type=str, required=True)
+    parser.add_argument("--data-dir", type=Path)
+    parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument("--num-workers", type=int, default=8)
+    parser.add_argument("--image-size", type=int, nargs=2, default=(64, 64))
+    parser.add_argument("--seg-length", type=int, default=2048)
+    parser.add_argument("--win-length", type=int, default=512)
+    parser.add_argument("--hop-length", type=int, default=128)
+    parser.add_argument("--fractions", type=float, nargs=3, default=(0.8, 0.1, 0.1))
+    parser.add_argument("--model", type=str, required=True)
+    parser.add_argument("--device", type=str, default=default_device)
+    parser.add_argument("--model-file", type=Path)
+    parser.add_argument("--num-epochs", type=int, default=10)
+    parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--logging-level", type=str, default="info")
+    main(parser.parse_args())
