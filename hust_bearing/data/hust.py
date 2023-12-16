@@ -13,7 +13,9 @@ from hust_bearing.data.core import Pipeline, register_pipeline
 @register_pipeline("hust")
 class HUSTBearingPipeline(Pipeline):
     def _download(self, data_dir: Path) -> None:
-        download_url = "https://prod-dcd-datasets-cache-zipfiles.s3.eu-west-1.amazonaws.com/cbv7jyx4p9-3.zip"
+        download_url = (
+            "https://prod-dcd-datasets-cache-zipfiles.s3.eu-west-1.amazonaws.com/cbv7jyx4p9-3.zip"
+        )
         download_zip_file = Path(
             "HUST bearing a practical dataset for ball bearing fault diagnosis.zip"
         )
