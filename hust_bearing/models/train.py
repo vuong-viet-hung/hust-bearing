@@ -16,13 +16,13 @@ def main(args: argparse.Namespace) -> None:
         level=getattr(logging, args.logging_level.upper()), format="%(message)s"
     )
 
-    # Create directory for data
+    # Set and create directory for data
     if args.data_dir is None:
         data_root_dir = Path("data")
         data_root_dir.mkdir(exist_ok=True)
         args.data_dir = data_root_dir / args.data
 
-    # Create directory for saved model
+    # Set and create directory for saved models
     if args.model_file is None:
         model_dir = Path("models") / args.data
         model_dir.mkdir(parents=True, exist_ok=True)
