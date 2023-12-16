@@ -203,7 +203,7 @@ class Pipeline(ABC):
             self._pixel_min = min(self._pixel_min, image_batch.min().item())
             self._pixel_max = max(self._pixel_max, image_batch.max().item())
             pixel_sum += image_batch.sum().item()
-            num_pixels += image_batch.numel().item()
+            num_pixels += image_batch.numel()
 
         self._pixel_min = pixel_sum / num_pixels
 
