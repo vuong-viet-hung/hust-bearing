@@ -52,7 +52,12 @@ class SegmentSTFTs(Dataset):
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         signal = self._loader(self._data_file)
         segment = signal[idx * self._seg_length : (idx + 1) * self._seg_length]
-        stft = torch.stft(torch.tensor(segment), self._win_length, self._hop_length)
+        stft = torch.stft(
+            torch.tensor(segment),
+            self._win_length,
+            self._hop_length,
+            return_complex=True,
+        )
         amplitude = stft.abs()
         db = 20 * amplitude.log10()
         image = self._transform(db.unsqueeze(dim=0))
@@ -188,9 +193,7 @@ class Pipeline(ABC):
     def _normalize(self, subset: str) -> None:
         if self._pixel_min == float("inf"):
             self._compute_stats()
-        normalizer = torchvision.transforms.Normalize(
-            self._pixel_mean, self._pixel_std
-        )
+        normalizer = torchvision.transforms.Normalize(self._pixel_mean, self._pixel_std)
         self._subsets[subset] = TransformDataset(self._subsets[subset], normalizer)
         self._build_data_loader(subset)
 
