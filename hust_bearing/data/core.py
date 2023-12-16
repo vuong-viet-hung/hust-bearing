@@ -148,18 +148,16 @@ class Pipeline(ABC):
             raise ValueError("Dataset isn't built or split.")
         self._batch_size = batch_size
         self._num_workers = num_workers
-        self._build_data_loader("train")
-        self._build_data_loader("valid")
-        self._build_data_loader("test")
+        for subset in self._subsets:
+            self._build_data_loader(subset)
         return self
 
     def min_max_scale(self) -> Self:
         if {"train", "valid", "test"}.symmetric_difference(self.data_loaders.keys()):
             raise ValueError("Data loaders aren't built.")
         logging.info("Min-max scaling data...")
-        self._min_max_scale("train")
-        self._min_max_scale("valid")
-        self._min_max_scale("test")
+        for subset in self._subsets:
+            self._min_max_scale(subset)
         logging.info("Data min-max scaled")
         return self
 
@@ -167,9 +165,8 @@ class Pipeline(ABC):
         if {"train", "valid", "test"}.symmetric_difference(self.data_loaders.keys()):
             raise ValueError("Data loaders aren't built.")
         logging.info("Normalizing data...")
-        self._normalize("train")
-        self._normalize("valid")
-        self._normalize("test")
+        for subset in self._subsets:
+            self._normalize(subset)
         logging.info("Data normalized")
         return self
 
