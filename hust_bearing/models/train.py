@@ -48,16 +48,17 @@ def main() -> None:
 
     pipeline = data.build_pipeline(args.data)
     (
-        pipeline.p_download(args.data_dir)
-        .p_build_dataset(
+        pipeline.download(args.data_dir)
+        .build_dataset(
             args.image_size, args.seg_length, args.win_length, args.hop_length
         )
-        .p_split_dataset(args.fractions)
-        .p_build_data_loaders(args.batch_size, args.num_workers)
-        .p_normalize()
+        .split_dataset(args.fractions)
+        .build_data_loaders(args.batch_size, args.num_workers)
+        .normalize()
     )
 
-    model = models.build_model(args.model, pipeline.num_classes)
+    num_classes = len(pipeline.label_encoder.classes_)
+    model = models.build_model(args.model, num_classes)
     loss_func = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), args.lr)
     lr_scheduler = optim.lr_scheduler.PolynomialLR(

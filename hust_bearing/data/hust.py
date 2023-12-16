@@ -5,15 +5,14 @@ import zipfile
 from pathlib import Path
 
 import numpy as np
+import scipy
 
 from hust_bearing.data.core import Pipeline, register_pipeline
-
-import scipy
 
 
 @register_pipeline("hust")
 class HUSTBearingPipeline(Pipeline):
-    def download(self, data_dir: Path) -> None:
+    def _download(self, data_dir: Path) -> None:
         download_url = "https://prod-dcd-datasets-cache-zipfiles.s3.eu-west-1.amazonaws.com/cbv7jyx4p9-3.zip"
         download_zip_file = Path(
             "HUST bearing a practical dataset for ball bearing fault diagnosis.zip"
@@ -30,10 +29,10 @@ class HUSTBearingPipeline(Pipeline):
         (download_extract_dir / "HUST bearing dataset").rename(data_dir)
         shutil.rmtree(download_extract_dir)
 
-    def list_data_files(self, data_dir: Path) -> list[Path]:
+    def _list_data_files(self, data_dir: Path) -> list[Path]:
         return list(data_dir.glob("*.mat"))
 
-    def read_label(self, data_file: Path) -> str:
+    def _read_label(self, data_file: Path) -> str:
         match = re.fullmatch(
             r"""
             ([a-zA-Z]+)  # Fault
@@ -49,6 +48,6 @@ class HUSTBearingPipeline(Pipeline):
             raise ValueError(f"Invalid file name: {data_file.name}")
         return match.group(1)
 
-    def load_signal(self, data_file: Path) -> np.ndarray:
+    def _read_signal(self, data_file: Path) -> np.ndarray:
         data = scipy.io.loadmat(str(data_file))
         return data["data"].astype(np.float32).squeeze()
