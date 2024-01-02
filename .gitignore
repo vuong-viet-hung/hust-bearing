@@ -4,4 +4,4 @@ __pycache__/
 *.ipynb
 *.mat
 *.pth
-lightning_logs/
+*logs/
