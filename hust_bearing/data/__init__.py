@@ -1,1 +1,1 @@
-from hust_bearing.data.hust import HUST
+from hust_bearing.data.hust import HUSTSim

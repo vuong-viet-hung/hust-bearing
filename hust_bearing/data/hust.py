@@ -12,7 +12,7 @@ from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import Dataset, DataLoader
 
 
-class HUST(pl.LightningDataModule):
+class HUSTSim(pl.LightningDataModule):
     def __init__(
         self,
         data_dir: Path | str = Path("spectrograms", "hust"),
@@ -41,14 +41,10 @@ class HUST(pl.LightningDataModule):
         self._train_labels = encoder.fit_transform(
             _labels_from_paths(self._train_paths)
         )
-        self._test_labels = encoder.transform(
-            _labels_from_paths(self._test_paths)
-        )
-        self._val_labels = encoder.transform(
-            _labels_from_paths(self._val_paths)
-        )
+        self._test_labels = encoder.transform(_labels_from_paths(self._test_paths))
+        self._val_labels = encoder.transform(_labels_from_paths(self._val_paths))
 
-        print(encoder.classes_)
+        print("Classes:", encoder.classes_)
 
     def setup(self, stage: str) -> None:
         if stage == "fit":
