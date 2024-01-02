@@ -53,6 +53,6 @@ class LeNet5(pl.LightningModule):
         self.test_acc(outputs, targets)
         self.log_dict({"test_loss": loss, "test_acc": self.test_acc}, prog_bar=True)
 
-    def predict_step(self, batch: tuple[torch.Tensor, torch.Tensor]) -> None:
+    def predict_step(self, batch: tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
         inputs, _ = batch
         return self.model(inputs).argmax(dim=1)
