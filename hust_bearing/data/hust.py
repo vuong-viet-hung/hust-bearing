@@ -15,7 +15,7 @@ from torch.utils.data import Dataset, DataLoader
 class HUST(pl.LightningDataModule):
     def __init__(
         self,
-        data_dir: Path | str = Path("data", "hust"),
+        data_dir: Path | str = Path("spectrograms", "hust"),
         batch_size: int = 32,
     ) -> None:
         super().__init__()
