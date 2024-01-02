@@ -15,6 +15,7 @@ torchvision = "^0.16.2"
 tqdm = "^4.66.1"
 lightning = {extras = ["pytorch-extra"], version = "^2.1.2"}
 tensorboard = "^2.15.1"
+mlp-mixer-pytorch = "^0.1.1"
 
 
 [tool.poetry.group.visualization.dependencies]
@@ -22,8 +23,8 @@ matplotlib = "^3.8.2"
 
 
 [tool.poetry.group.notebooks.dependencies]
-ipykernel = "^6.27.1"
 ipywidgets = "^8.1.1"
+jupyterlab = "^4.0.10"
 
 
 [tool.poetry.group.dev.dependencies]
