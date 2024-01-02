@@ -1,6 +1,7 @@
 .idea/
 .venv/
 __pycache__/
+*.ipynb
 *.mat
 *.pth
 lightning_logs/
