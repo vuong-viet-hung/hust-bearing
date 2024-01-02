@@ -48,6 +48,8 @@ class HUST(pl.LightningDataModule):
             _labels_from_paths(self._val_paths)
         )
 
+        print(encoder.classes_)
+
     def setup(self, stage: str) -> None:
         if stage == "fit":
             self._train_ds = Spectrograms(self._train_paths, self._train_labels)
@@ -55,6 +57,9 @@ class HUST(pl.LightningDataModule):
 
         if stage == "test":
             self._test_ds = Spectrograms(self._test_paths, self._test_labels)
+
+        if stage == "predict":
+            self._predict_ds = Spectrograms(self._test_paths, self._test_labels)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -68,7 +73,7 @@ class HUST(pl.LightningDataModule):
         return DataLoader(self._val_ds, batch_size=self._batch_size, num_workers=8)
 
     def predict_dataloader(self) -> DataLoader:
-        return self.test_dataloader()
+        return DataLoader(self._predict_ds, batch_size=self._batch_size, num_workers=8)
 
 
 class Spectrograms(Dataset):
