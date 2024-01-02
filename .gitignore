@@ -3,3 +3,4 @@
 __pycache__/
 *.mat
 *.pth
+lightning_logs/
