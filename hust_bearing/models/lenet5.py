@@ -10,7 +10,7 @@ class LeNet5Clf(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=6, kernel_size=5)
         self.conv2 = nn.Conv2d(in_channels=6, out_channels=16, kernel_size=5)
-        self.fc1 = nn.Linear(in_features=16 * 5 * 5, out_features=120)
+        self.fc1 = nn.Linear(in_features=16 * 13 * 13, out_features=120)
         self.fc2 = nn.Linear(in_features=120, out_features=84)
         self.fc3 = nn.Linear(in_features=84, out_features=num_classes)
 
