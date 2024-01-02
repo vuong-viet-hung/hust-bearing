@@ -29,7 +29,7 @@ class HUST(pl.LightningDataModule):
         fit_dirs = list(fit_dir.iterdir())
         train_dirs, val_dirs = train_test_split(
             fit_dirs,
-            test_size=0.1,
+            test_size=0.2,
             stratify=_labels_from_dirs(fit_dirs),
         )
         encoder = LabelEncoder()
@@ -82,7 +82,7 @@ class Spectrograms(Dataset):
         self._transform = torchvision.transforms.Compose(
             [
                 torchvision.transforms.ToTensor(),
-                torchvision.transforms.Resize((64, 64))
+                torchvision.transforms.Resize((64, 64), antialias=None),
             ]
         )
 
@@ -91,7 +91,7 @@ class Spectrograms(Dataset):
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         spectrogram = _load_spectrogram(self._paths[idx])
-        image = self._transform(spectrogram.unsqueeze(dim=0))
+        image = self._transform(spectrogram)
         return image, self._labels[idx]
 
 
