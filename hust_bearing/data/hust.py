@@ -51,6 +51,9 @@ class HUSTSim(pl.LightningDataModule):
             self._train_ds = Spectrograms(self._train_paths, self._train_labels)
             self._val_ds = Spectrograms(self._val_paths, self._val_labels)
 
+        if stage == "validate":
+            self._val_ds = Spectrograms(self._val_paths, self._val_labels)
+
         if stage == "test":
             self._test_ds = Spectrograms(self._test_paths, self._test_labels)
 
