@@ -3,6 +3,7 @@ from itertools import chain
 from pathlib import Path
 
 import lightning as pl
+import joblib
 import numpy as np
 import scipy
 import torch
@@ -32,19 +33,17 @@ class HUSTSim(pl.LightningDataModule):
             test_size=0.2,
             stratify=_labels_from_dirs(fit_dirs),
         )
-        encoder = LabelEncoder()
 
         self._train_paths = _list_dirs(train_dirs)
         self._test_paths = list(test_dir.glob("**/*.mat"))
         self._val_paths = _list_dirs(val_dirs)
 
-        self._train_labels = encoder.fit_transform(
-            _labels_from_paths(self._train_paths)
-        )
+        encoder_path = self._data_dir / "label_encoder.joblib"
+        encoder = _load_encoder(encoder_path, _labels_from_paths(self._train_paths))
+
+        self._train_labels = encoder.transform(_labels_from_paths(self._train_paths))
         self._test_labels = encoder.transform(_labels_from_paths(self._test_paths))
         self._val_labels = encoder.transform(_labels_from_paths(self._val_paths))
-
-        print("Classes:", encoder.classes_)
 
     def setup(self, stage: str) -> None:
         if stage == "fit":
@@ -125,6 +124,15 @@ def _labels_from_dirs(dirs: list[Path]) -> list[str]:
 
 def _labels_from_paths(paths: list[Path]) -> list[str]:
     return [_extract_label(path.parent.name) for path in paths]
+
+
+def _load_encoder(encoder_path: Path, fit_labels: list[str]) -> LabelEncoder:
+    if encoder_path.exists():
+        return joblib.load(encoder_path)
+    encoder = LabelEncoder()
+    encoder.fit(fit_labels)
+    joblib.dump(encoder, encoder_path)
+    return encoder
 
 
 def _load_spectrogram(path: Path) -> torch.Tensor:
