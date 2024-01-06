@@ -54,7 +54,17 @@ class HUSTSim(pl.LightningDataModule):
         return self.test_dataloader()
 
     def _init_paths(self) -> None:
-        train_dirs, test_dirs, val_dirs = _list_data_dir(self._data_dir, val_size=0.2)
+        fit_dir = self._data_dir / "simulate"
+        test_dir = self._data_dir / "measure"
+
+        fit_dirs = list(fit_dir.iterdir())
+        train_dirs, val_dirs = train_test_split(
+            fit_dirs,
+            test_size=0.2,
+            stratify=_labels_from_dirs(fit_dirs),
+        )
+        test_dirs = list(test_dir.iterdir())
+
         self._train_paths = _list_dirs(train_dirs)
         self._test_paths = _list_dirs(test_dirs)
         self._val_paths = _list_dirs(val_dirs)
@@ -81,21 +91,6 @@ def _extract_label(name: str) -> str:
     if match is None:
         raise ValueError(f"Invalid name: {name}")
     return match.group(1)
-
-
-def _list_data_dir(
-    data_dir: Path, val_size: float
-) -> tuple[list[Path], list[Path], list[Path]]:
-    fit_dir = data_dir / "simulate"
-    test_dir = data_dir / "measure"
-    fit_dirs = list(fit_dir.iterdir())
-    train_dirs, val_dirs = train_test_split(
-        fit_dirs,
-        test_size=val_size,
-        stratify=_labels_from_dirs(fit_dirs),
-    )
-    test_dirs = list(test_dir.iterdir())
-    return train_dirs, test_dirs, val_dirs
 
 
 def _load_encoder(encoder_path: Path, fit_labels: list[str]) -> LabelEncoder:
