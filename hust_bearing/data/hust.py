@@ -24,3 +24,6 @@ class HUSTSim(SimulatedSpectrogramDM):
         if match is None:
             raise ValueError(f"Invalid directory name: {dir_name}")
         return match.group(1)
+
+    def download(self) -> None:
+        pass
