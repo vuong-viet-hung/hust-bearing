@@ -33,5 +33,4 @@ class Spectrograms(Dataset):
 
 def _load_spectrogram(path: Path) -> torch.Tensor:
     data = scipy.io.loadmat(str(path))
-    spectrogram = data["spec"].astype(np.float32)
-    return spectrogram
+    return data["spec"].astype(np.float32)

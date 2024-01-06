@@ -10,7 +10,7 @@ trainer:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs
-      name: fit-hust_sim-lenet5
+      name: test-hust_sim-conv_mixer
       version: null
       log_graph: false
       default_hp_metric: true
@@ -21,7 +21,23 @@ trainer:
       max_queue: 10
       flush_secs: 120
       filename_suffix: ''
-  callbacks: null
+  callbacks:
+  - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+    init_args:
+      dirpath: null
+      filename: null
+      monitor: val_acc
+      verbose: false
+      save_last: null
+      save_top_k: 1
+      save_weights_only: false
+      mode: max
+      auto_insert_metric_name: true
+      every_n_train_steps: null
+      train_time_interval: null
+      every_n_epochs: null
+      save_on_train_epoch_end: null
+      enable_version_counter: true
   fast_dev_run: false
   max_epochs: 10
   min_epochs: null
@@ -54,9 +70,10 @@ trainer:
   sync_batchnorm: false
   reload_dataloaders_every_n_epochs: 0
   default_root_dir: null
-ckpt_path: null
+ckpt_path: logs/fit-hust_sim-conv_mixer/version_0/checkpoints/epoch=7-step=1680.ckpt
+verbose: true
 model:
-  class_path: hust_bearing.models.LeNet5
+  class_path: hust_bearing.models.ConvMixer
   init_args:
     num_classes: 4
 data:
@@ -67,7 +84,7 @@ data:
 optimizer:
   class_path: torch.optim.Adam
   init_args:
-    lr: 0.001
+    lr: 0.0001
     betas:
     - 0.9
     - 0.999
