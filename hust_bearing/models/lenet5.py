@@ -26,4 +26,5 @@ class LeNet5Clf(nn.Module):
 
 class LeNet5(Classifier):
     def __init__(self, num_classes: int) -> None:
-        super().__init__(LeNet5Clf(num_classes), num_classes)
+        model = LeNet5Clf(num_classes)
+        super().__init__(model, num_classes)

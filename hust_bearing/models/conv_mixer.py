@@ -31,4 +31,5 @@ class ConvMixerClf(nn.Module):
 
 class ConvMixer(Classifier):
     def __init__(self, num_classes: int) -> None:
-        super().__init__(ConvMixerClf(num_classes), num_classes)
+        model = ConvMixerClf(num_classes)
+        super().__init__(model, num_classes)
