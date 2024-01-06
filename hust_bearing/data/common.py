@@ -21,7 +21,8 @@ class SimulatedSpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         self.batch_size = batch_size
 
     def prepare_data(self) -> None:
-        self.download()
+        if not self.data_dir.exists():
+            self.download()
         self._init_paths()
         self._init_labels()
 
