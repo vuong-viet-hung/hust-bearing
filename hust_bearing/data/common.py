@@ -93,14 +93,13 @@ class MeasuredSpectrogramDM(SpectrogramDM, metaclass=ABCMeta):
         fit_dirs = list(dirs[loads == self._train_load])
         test_dirs = list(dirs[loads != self._train_load])
 
-        labels = [self.extract_label(dir_.name) for dir_ in fit_dirs]
-        train_dirs, val_dirs = train_test_split(
-            fit_dirs, test_size=0.2, stratify=labels
-        )
-
-        self.train_paths = _list_dirs(train_dirs)
+        fit_paths = _list_dirs(fit_dirs)
         self.test_paths = _list_dirs(test_dirs)
-        self.val_paths = _list_dirs(val_dirs)
+
+        labels = [self.extract_label(dir_.parent.name) for dir_ in fit_paths]
+        self.train_paths, self.val_paths = train_test_split(
+            fit_paths, test_size=0.2, stratify=labels
+        )
 
     @abstractmethod
     def extract_load(self, dir_name: str) -> str:
