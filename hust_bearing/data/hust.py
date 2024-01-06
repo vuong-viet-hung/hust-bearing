@@ -1,5 +1,3 @@
-# pylint: disable=attribute-defined-outside-init, too-many-instance-attributes
-
 import re
 from itertools import chain
 from pathlib import Path

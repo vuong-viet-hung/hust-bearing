@@ -31,7 +31,6 @@ jupyterlab = "^4.0.10"
 [tool.poetry.group.dev.dependencies]
 black = "^23.12.1"
 mypy = "^1.7.1"
-pylint = "^3.0.3"
 pytest = "^7.4.3"
 
 [tool.poetry.scripts]
