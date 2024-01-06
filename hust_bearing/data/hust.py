@@ -63,19 +63,19 @@ class HUSTSim(pl.LightningDataModule):
 
     def _set_paths(self) -> None:
         subdirs = _list_data_dir(self._data_dir, val_size=0.2)
-        for stage in {"train", "test", "val"}:
-            self._paths[stage] = _list_subdirs(subdirs[stage])
+        for split in {"train", "test", "val"}:
+            self._paths[split] = _list_subdirs(subdirs[split])
 
     def _set_labels(self) -> None:
         encoder_path = self._data_dir / "label_encoder.joblib"
         encoder = _load_encoder(encoder_path, _labels_from_paths(self._paths["train"]))
-        for stage in {"train", "test", "val"}:
-            self._labels[stage] = encoder.transform(
-                _labels_from_paths(self._paths[stage])
+        for split in {"train", "test", "val"}:
+            self._labels[split] = encoder.transform(
+                _labels_from_paths(self._paths[split])
             )
 
-    def _setup(self, stage: str) -> None:
-        self._datasets[stage] = Spectrograms(self._paths[stage], self._labels[stage])
+    def _setup(self, split: str) -> None:
+        self._datasets[split] = Spectrograms(self._paths[split], self._labels[split])
 
 
 def _extract_label(name: str) -> str:
