@@ -13,7 +13,7 @@ class HUST(MeasuredSpectrogramDM):
     ) -> None:
         super().__init__(train_load, data_dir, batch_size)
         self._downloader = HUSTDownloader()
-        self._parser = HUSTParser()
+        self._parser = HUSTDirNameParser()
 
     def download(self) -> None:
         return self._downloader.download(self.data_dir)
@@ -31,7 +31,7 @@ class HUSTSim(SimulatedSpectrogramDM):
     ) -> None:
         super().__init__(data_dir, batch_size)
         self._downloader = HUSTDownloader()
-        self._parser = HUSTParser()
+        self._parser = HUSTDirNameParser()
 
     def download(self) -> None:
         return self._downloader.download(self.data_dir)
@@ -45,7 +45,7 @@ class HUSTDownloader:
         pass
 
 
-class HUSTParser:
+class HUSTDirNameParser:
     _regex = re.compile(
         r"""
         ([a-zA-Z]+)  # Fault
