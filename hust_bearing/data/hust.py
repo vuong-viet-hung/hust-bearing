@@ -4,7 +4,6 @@ from pathlib import Path
 
 import lightning as pl
 import joblib
-import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import DataLoader
@@ -21,9 +20,6 @@ class HUSTSim(pl.LightningDataModule):
         super().__init__()
         self._data_dir = Path(data_dir)
         self._batch_size = batch_size
-        self._paths: dict[str, list[Path]] = {}
-        self._labels: dict[str, np.ndarray] = {}
-        self._datasets: dict[str, Spectrograms] = {}
 
     def prepare_data(self) -> None:
         self._init_paths()
@@ -31,51 +27,44 @@ class HUSTSim(pl.LightningDataModule):
 
     def setup(self, stage: str) -> None:
         if stage == "fit":
-            self._init_ds("train")
-            self._init_ds("val")
+            self._train_ds = Spectrograms(self._train_paths, self._train_labels)
+            self._val_ds = Spectrograms(self._test_paths, self._test_labels)
 
         elif stage == "validate":
-            self._init_ds("val")
+            self._val_ds = Spectrograms(self._val_paths, self._val_labels)
 
         else:
-            self._init_ds("test")
+            self._test_ds = Spectrograms(self._test_paths, self._test_labels)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
-            self._datasets["train"],
+            self._train_ds,
             batch_size=self._batch_size,
             num_workers=8,
             shuffle=True,
         )
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self._datasets["test"], batch_size=self._batch_size, num_workers=8
-        )
+        return DataLoader(self._test_ds, batch_size=self._batch_size, num_workers=8)
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self._datasets["val"], batch_size=self._batch_size, num_workers=8
-        )
+        return DataLoader(self._val_ds, batch_size=self._batch_size, num_workers=8)
 
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
 
     def _init_paths(self) -> None:
-        subdirs = _list_data_dir(self._data_dir, val_size=0.2)
-        for split in {"train", "test", "val"}:
-            self._paths[split] = _list_subdirs(subdirs[split])
+        train_dirs, test_dirs, val_dirs = _list_data_dir(self._data_dir, val_size=0.2)
+        self._train_paths = _list_dirs(train_dirs)
+        self._test_paths = _list_dirs(test_dirs)
+        self._val_paths = _list_dirs(val_dirs)
 
     def _init_labels(self) -> None:
         encoder_path = self._data_dir / "label_encoder.joblib"
-        encoder = _load_encoder(encoder_path, _labels_from_paths(self._paths["train"]))
-        for split in {"train", "test", "val"}:
-            self._labels[split] = encoder.transform(
-                _labels_from_paths(self._paths[split])
-            )
-
-    def _init_ds(self, split: str) -> None:
-        self._datasets[split] = Spectrograms(self._paths[split], self._labels[split])
+        encoder = _load_encoder(encoder_path, _labels_from_paths(self._train_paths))
+        self._train_labels = encoder.transform(_labels_from_paths(self._train_paths))
+        self._test_labels = encoder.transform(_labels_from_paths(self._test_paths))
+        self._val_labels = encoder.transform(_labels_from_paths(self._val_paths))
 
 
 def _extract_label(name: str) -> str:
@@ -94,18 +83,19 @@ def _extract_label(name: str) -> str:
     return match.group(1)
 
 
-def _list_data_dir(data_dir: Path, val_size: float) -> dict[str, list[Path]]:
+def _list_data_dir(
+    data_dir: Path, val_size: float
+) -> tuple[list[Path], list[Path], list[Path]]:
     fit_dir = data_dir / "simulate"
     test_dir = data_dir / "measure"
-    subdirs: dict[str, list[Path]] = {}
-    fit_subdirs = list(fit_dir.iterdir())
-    subdirs["train"], subdirs["val"] = train_test_split(
-        fit_subdirs,
+    fit_dirs = list(fit_dir.iterdir())
+    train_dirs, val_dirs = train_test_split(
+        fit_dirs,
         test_size=val_size,
-        stratify=_labels_from_subdirs(fit_subdirs),
+        stratify=_labels_from_dirs(fit_dirs),
     )
-    subdirs["test"] = list(test_dir.iterdir())
-    return subdirs
+    test_dirs = list(test_dir.iterdir())
+    return train_dirs, test_dirs, val_dirs
 
 
 def _load_encoder(encoder_path: Path, fit_labels: list[str]) -> LabelEncoder:
@@ -117,12 +107,12 @@ def _load_encoder(encoder_path: Path, fit_labels: list[str]) -> LabelEncoder:
     return encoder
 
 
-def _list_subdirs(subdirs: list[Path]) -> list[Path]:
-    return list(chain.from_iterable(subdir.glob("*.mat") for subdir in subdirs))
+def _list_dirs(dirs: list[Path]) -> list[Path]:
+    return list(chain.from_iterable(dir_.glob("*.mat") for dir_ in dirs))
 
 
-def _labels_from_subdirs(subdirs: list[Path]) -> list[str]:
-    return [_extract_label(subdir.name) for subdir in subdirs]
+def _labels_from_dirs(dirs: list[Path]) -> list[str]:
+    return [_extract_label(dir_.name) for dir_ in dirs]
 
 
 def _labels_from_paths(paths: list[Path]) -> list[str]:
