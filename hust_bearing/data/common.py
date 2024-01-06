@@ -118,9 +118,9 @@ class SimulatedSpectrogramDM(SpectrogramDM, metaclass=ABCMeta):
             fit_dirs, test_size=0.2, stratify=fit_labels
         )
 
-        self._train_paths = _list_dirs(train_dirs)
-        self._test_paths = _list_dirs(test_dirs)
-        self._val_paths = _list_dirs(val_dirs)
+        self.train_paths = _list_dirs(train_dirs)
+        self.test_paths = _list_dirs(test_dirs)
+        self.val_paths = _list_dirs(val_dirs)
 
 
 class Spectrograms(Dataset):
