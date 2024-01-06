@@ -31,14 +31,14 @@ class HUSTSim(pl.LightningDataModule):
 
     def setup(self, stage: str) -> None:
         if stage == "fit":
-            self._setup("train")
-            self._setup("val")
+            self._init_ds("train")
+            self._init_ds("val")
 
         elif stage == "validate":
-            self._setup("val")
+            self._init_ds("val")
 
         else:
-            self._setup("test")
+            self._init_ds("test")
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -74,7 +74,7 @@ class HUSTSim(pl.LightningDataModule):
                 _labels_from_paths(self._paths[split])
             )
 
-    def _setup(self, split: str) -> None:
+    def _init_ds(self, split: str) -> None:
         self._datasets[split] = Spectrograms(self._paths[split], self._labels[split])
 
 
