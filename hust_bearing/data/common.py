@@ -116,11 +116,11 @@ class MeasuredSpectrogramDM(SpectrogramDM, metaclass=ABCMeta):
         self._train_load = train_load
 
     def init_paths(self) -> None:
-        dirs = list((self.data_dir / "measure").iterdir())
+        dirs = np.array(list((self.data_dir / "measure").iterdir()))
 
-        loads = [self.extract_load(dir_.name) for dir_ in dirs]
-        fit_dirs = list(np.array(dirs)[loads == self._train_load])
-        test_dirs = list(np.array(dirs)[loads != self._train_load])
+        loads = np.array([self.extract_load(dir_.name) for dir_ in dirs])
+        fit_dirs = list(dirs[loads == self._train_load])
+        test_dirs = list(dirs[loads != self._train_load])
 
         labels = [self.extract_label(dir_.name) for dir_ in fit_dirs]
         train_dirs, val_dirs = train_test_split(
