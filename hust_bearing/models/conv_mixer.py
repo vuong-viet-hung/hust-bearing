@@ -3,7 +3,7 @@ from mlp_mixer_pytorch import MLPMixer
 from torch import nn
 from torch.nn.functional import gelu
 
-from hust_bearing.models.common import Classifier
+from hust_bearing.models.common import ClassificationModel
 
 
 class ConvMixerClf(nn.Module):
@@ -27,7 +27,7 @@ class ConvMixerClf(nn.Module):
         return self.mixer(pool)
 
 
-class ConvMixer(Classifier):
+class ConvMixer(ClassificationModel):
     def __init__(self, num_classes: int) -> None:
-        model = ConvMixerClf(num_classes)
-        super().__init__(model, num_classes)
+        clf = ConvMixerClf(num_classes)
+        super().__init__(clf, num_classes)
