@@ -62,14 +62,13 @@ class HUSTSim(pl.LightningDataModule):
         return self.test_dataloader()
 
     def _set_paths(self) -> None:
-        paths = _list_data_dir(self._data_dir, val_size=0.2)
+        subdirs = _list_data_dir(self._data_dir, val_size=0.2)
         for stage in {"train", "test", "val"}:
-            self._paths[stage] = paths[stage]
+            self._paths[stage] = _list_subdirs(subdirs[stage])
 
     def _set_labels(self) -> None:
         encoder_path = self._data_dir / "label_encoder.joblib"
         encoder = _load_encoder(encoder_path, _labels_from_paths(self._paths["train"]))
-
         for stage in {"train", "test", "val"}:
             self._labels[stage] = encoder.transform(
                 _labels_from_paths(self._paths[stage])
@@ -98,16 +97,15 @@ def _extract_label(name: str) -> str:
 def _list_data_dir(data_dir: Path, val_size: float) -> dict[str, list[Path]]:
     fit_dir = data_dir / "simulate"
     test_dir = data_dir / "measure"
-
-    paths: dict[str, list[Path]] = {}
-    fit_dirs = list(fit_dir.iterdir())
-    paths["train"], paths["val"] = train_test_split(
-        fit_dirs,
+    subdirs: dict[str, list[Path]] = {}
+    fit_subdirs = list(fit_dir.iterdir())
+    subdirs["train"], subdirs["val"] = train_test_split(
+        fit_subdirs,
         test_size=val_size,
-        stratify=_labels_from_dirs(fit_dirs),
+        stratify=_labels_from_subdirs(fit_subdirs),
     )
-    paths["test"] = list(test_dir.iterdir())
-    return paths
+    subdirs["test"] = list(test_dir.iterdir())
+    return subdirs
 
 
 def _load_encoder(encoder_path: Path, fit_labels: list[str]) -> LabelEncoder:
@@ -119,12 +117,12 @@ def _load_encoder(encoder_path: Path, fit_labels: list[str]) -> LabelEncoder:
     return encoder
 
 
-def _list_dirs(dirs: list[Path]) -> list[Path]:
-    return list(chain.from_iterable(dir_.glob("*.mat") for dir_ in dirs))
+def _list_subdirs(subdirs: list[Path]) -> list[Path]:
+    return list(chain.from_iterable(subdir.glob("*.mat") for subdir in subdirs))
 
 
-def _labels_from_dirs(dirs: list[Path]) -> list[str]:
-    return [_extract_label(dir_.name) for dir_ in dirs]
+def _labels_from_subdirs(subdirs: list[Path]) -> list[str]:
+    return [_extract_label(subdir.name) for subdir in subdirs]
 
 
 def _labels_from_paths(paths: list[Path]) -> list[str]:
