@@ -1,10 +1,12 @@
+from abc import ABCMeta
+
 import lightning as pl
 import torch
 from torch import nn
 from torchmetrics.classification import MulticlassAccuracy
 
 
-class ClassificationModel(pl.LightningModule):
+class ClassificationModel(pl.LightningModule, metaclass=ABCMeta):
     def __init__(self, clf: nn.Module, num_classes: int) -> None:
         super().__init__()
         self.clf = clf
