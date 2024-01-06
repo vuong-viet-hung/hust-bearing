@@ -24,18 +24,18 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         if not self.data_dir.exists():
             self.download()
         self.init_paths()
-        self._init_labels()
+        self.init_labels()
 
     def setup(self, stage: str) -> None:
         if stage == "fit":
-            self._train_ds = Spectrograms(self._train_paths, self._train_labels)
-            self._val_ds = Spectrograms(self._val_paths, self._val_labels)
+            self._train_ds = Spectrograms(self.train_paths, self.train_labels)
+            self._val_ds = Spectrograms(self.val_paths, self.val_labels)
 
         elif stage == "validate":
-            self._val_ds = Spectrograms(self._val_paths, self._val_labels)
+            self._val_ds = Spectrograms(self.val_paths, self.val_labels)
 
         else:
-            self._test_ds = Spectrograms(self._test_paths, self._test_labels)
+            self._test_ds = Spectrograms(self.test_paths, self.test_labels)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(self._train_ds, self.batch_size, num_workers=8, shuffle=True)
@@ -59,26 +59,26 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
 
     @abstractmethod
     def init_paths(self) -> None:
-        self._train_paths = []
-        self._test_paths = []
-        self._val_paths = []
+        self.train_paths = []
+        self.test_paths = []
+        self.val_paths = []
 
-    def _init_labels(self) -> None:
+    def init_labels(self) -> None:
         encoder_path = self.data_dir / "label_encoder.joblib"
         encoder = _load_encoder(encoder_path, self._get_train_labels())
 
-        self._train_labels = encoder.transform(self._get_train_labels())
-        self._test_labels = encoder.transform(self._get_test_labels())
-        self._val_labels = encoder.transform(self._get_val_labels())
+        self.train_labels = encoder.transform(self._get_train_labels())
+        self.test_labels = encoder.transform(self._get_test_labels())
+        self.val_labels = encoder.transform(self._get_val_labels())
 
     def _get_train_labels(self) -> list[str]:
-        return [self.extract_label(path.parent.name) for path in self._train_paths]
+        return [self.extract_label(path.parent.name) for path in self.train_paths]
 
     def _get_test_labels(self) -> list[str]:
-        return [self.extract_label(path.parent.name) for path in self._test_paths]
+        return [self.extract_label(path.parent.name) for path in self.test_paths]
 
     def _get_val_labels(self) -> list[str]:
-        return [self.extract_label(path.parent.name) for path in self._val_paths]
+        return [self.extract_label(path.parent.name) for path in self.val_paths]
 
 
 class MeasuredSpectrogramDM(SpectrogramDM, metaclass=ABCMeta):
@@ -101,9 +101,9 @@ class MeasuredSpectrogramDM(SpectrogramDM, metaclass=ABCMeta):
             fit_dirs, test_size=0.2, stratify=labels
         )
 
-        self._train_paths = _list_dirs(train_dirs)
-        self._test_paths = _list_dirs(test_dirs)
-        self._val_paths = _list_dirs(val_dirs)
+        self.train_paths = _list_dirs(train_dirs)
+        self.test_paths = _list_dirs(test_dirs)
+        self.val_paths = _list_dirs(val_dirs)
 
     @abstractmethod
     def extract_load(self, dir_name: str) -> str:
