@@ -1,6 +1,8 @@
+# pylint: disable=not-callable, too-many-ancestors
+
 import torch
-from torch import nn
 from mlp_mixer_pytorch import MLPMixer
+from torch import nn
 from torch.nn.functional import gelu
 
 from hust_bearing.models.common import Classifier

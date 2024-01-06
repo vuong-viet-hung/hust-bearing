@@ -1,3 +1,5 @@
+# pylint: disable=unused-import, unused-variable
+
 from lightning.pytorch.cli import LightningCLI
 
 from hust_bearing.data import HUSTSim

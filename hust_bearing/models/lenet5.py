@@ -1,3 +1,5 @@
+# pylint: disable=too-many-ancestors
+
 import torch
 from torch import nn
 from torch.nn.functional import max_pool2d, relu
