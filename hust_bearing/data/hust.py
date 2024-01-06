@@ -62,20 +62,9 @@ class HUSTSim(pl.LightningDataModule):
         return self.test_dataloader()
 
     def _set_paths(self) -> None:
-        fit_dir = self._data_dir / "simulate"
-        test_dir = self._data_dir / "measure"
-
-        dirs: dict[str, list[Path]] = {}
-        fit_dirs = list(fit_dir.iterdir())
-        dirs["train"], dirs["val"] = train_test_split(
-            fit_dirs,
-            test_size=0.2,
-            stratify=_labels_from_dirs(fit_dirs),
-        )
-        dirs["test"] = list(test_dir.iterdir())
-
+        paths = _list_data_dir(self._data_dir, val_size=0.2)
         for stage in {"train", "test", "val"}:
-            self._paths[stage] = dirs[stage]
+            self._paths[stage] = paths[stage]
 
     def _set_labels(self) -> None:
         encoder_path = self._data_dir / "label_encoder.joblib"
@@ -88,27 +77,6 @@ class HUSTSim(pl.LightningDataModule):
 
     def _setup(self, stage: str) -> None:
         self._datasets[stage] = Spectrograms(self._paths[stage], self._labels[stage])
-
-
-def _list_dirs(dirs: list[Path]) -> list[Path]:
-    return list(chain.from_iterable(dir_.glob("*.mat") for dir_ in dirs))
-
-
-def _load_encoder(encoder_path: Path, fit_labels: list[str]) -> LabelEncoder:
-    if encoder_path.exists():
-        return joblib.load(encoder_path)
-    encoder = LabelEncoder()
-    encoder.fit(fit_labels)
-    joblib.dump(encoder, encoder_path)
-    return encoder
-
-
-def _labels_from_dirs(dirs: list[Path]) -> list[str]:
-    return [_extract_label(dir_.name) for dir_ in dirs]
-
-
-def _labels_from_paths(paths: list[Path]) -> list[str]:
-    return [_extract_label(path.parent.name) for path in paths]
 
 
 def _extract_label(name: str) -> str:
@@ -125,3 +93,39 @@ def _extract_label(name: str) -> str:
     if match is None:
         raise ValueError(f"Invalid name: {name}")
     return match.group(1)
+
+
+def _list_data_dir(data_dir: Path, val_size: float) -> dict[str, list[Path]]:
+    fit_dir = data_dir / "simulate"
+    test_dir = data_dir / "measure"
+
+    paths: dict[str, list[Path]] = {}
+    fit_dirs = list(fit_dir.iterdir())
+    paths["train"], paths["val"] = train_test_split(
+        fit_dirs,
+        test_size=val_size,
+        stratify=_labels_from_dirs(fit_dirs),
+    )
+    paths["test"] = list(test_dir.iterdir())
+    return paths
+
+
+def _load_encoder(encoder_path: Path, fit_labels: list[str]) -> LabelEncoder:
+    if encoder_path.exists():
+        return joblib.load(encoder_path)
+    encoder = LabelEncoder()
+    encoder.fit(fit_labels)
+    joblib.dump(encoder, encoder_path)
+    return encoder
+
+
+def _list_dirs(dirs: list[Path]) -> list[Path]:
+    return list(chain.from_iterable(dir_.glob("*.mat") for dir_ in dirs))
+
+
+def _labels_from_dirs(dirs: list[Path]) -> list[str]:
+    return [_extract_label(dir_.name) for dir_ in dirs]
+
+
+def _labels_from_paths(paths: list[Path]) -> list[str]:
+    return [_extract_label(path.parent.name) for path in paths]
