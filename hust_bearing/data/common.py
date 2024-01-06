@@ -14,7 +14,7 @@ from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import DataLoader
 
 
-class SimulatedSpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
+class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
     def __init__(self, data_dir: Path | str, batch_size: int) -> None:
         super().__init__()
         self.data_dir = Path(data_dir)
@@ -23,7 +23,7 @@ class SimulatedSpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
     def prepare_data(self) -> None:
         if not self.data_dir.exists():
             self.download()
-        self._init_paths()
+        self.init_paths()
         self._init_labels()
 
     def setup(self, stage: str) -> None:
@@ -49,20 +49,19 @@ class SimulatedSpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
 
-    def _init_paths(self) -> None:
-        fit_dir = self.data_dir / "simulate"
-        test_dir = self.data_dir / "measure"
+    @abstractmethod
+    def download(self) -> None:
+        pass
 
-        fit_dirs = list(fit_dir.iterdir())
-        test_dirs = list(test_dir.iterdir())
-        fit_labels = [self.extract_label(dir_.name) for dir_ in fit_dirs]
-        train_dirs, val_dirs = train_test_split(
-            fit_dirs, test_size=0.2, stratify=fit_labels
-        )
+    @abstractmethod
+    def extract_label(self, dir_name: str) -> str:
+        pass
 
-        self._train_paths = _list_dirs(train_dirs)
-        self._test_paths = _list_dirs(test_dirs)
-        self._val_paths = _list_dirs(val_dirs)
+    @abstractmethod
+    def init_paths(self) -> None:
+        self._train_paths = []
+        self._test_paths = []
+        self._val_paths = []
 
     def _init_labels(self) -> None:
         encoder_path = self.data_dir / "label_encoder.joblib"
@@ -81,13 +80,51 @@ class SimulatedSpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
     def _get_val_labels(self) -> list[str]:
         return [self.extract_label(path.parent.name) for path in self._val_paths]
 
-    @abstractmethod
-    def download(self) -> None:
-        pass
+
+class MeasuredSpectrogramDM(SpectrogramDM, metaclass=ABCMeta):
+    def __init__(self, train_load: str, data_dir: Path | str, batch_size: int) -> None:
+        data_dir = Path(data_dir) / "measure"
+        super().__init__(data_dir, batch_size)
+        self._train_load = train_load
+
+    def init_paths(self) -> None:
+        dirs = self.data_dir.iterdir()
+
+        loads = [self.extract_load(dir_.name) for dir_ in dirs]
+        fit_dirs = [dir_ for dir_, load in zip(dirs, loads) if load == self._train_load]
+        test_dirs = [
+            dir_ for dir_, load in zip(dirs, loads) if load != self._train_load
+        ]
+
+        labels = [self.extract_label(dir_.name) for dir_ in fit_dirs]
+        train_dirs, val_dirs = train_test_split(
+            fit_dirs, test_size=0.2, stratify=labels
+        )
+
+        self._train_paths = _list_dirs(train_dirs)
+        self._test_paths = _list_dirs(test_dirs)
+        self._val_paths = _list_dirs(val_dirs)
 
     @abstractmethod
-    def extract_label(self, dir_name: str) -> str:
+    def extract_load(self, dir_name: str) -> str:
         pass
+
+
+class SimulatedSpectrogramDM(SpectrogramDM, metaclass=ABCMeta):
+    def init_paths(self) -> None:
+        test_dir = self.data_dir / "measure"
+        fit_dir = self.data_dir / "simulate"
+
+        test_dirs = list(test_dir.iterdir())
+        fit_dirs = list(fit_dir.iterdir())
+        fit_labels = [self.extract_label(dir_.name) for dir_ in fit_dirs]
+        train_dirs, val_dirs = train_test_split(
+            fit_dirs, test_size=0.2, stratify=fit_labels
+        )
+
+        self._train_paths = _list_dirs(train_dirs)
+        self._test_paths = _list_dirs(test_dirs)
+        self._val_paths = _list_dirs(val_dirs)
 
 
 class Spectrograms(Dataset):
