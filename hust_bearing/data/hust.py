@@ -60,12 +60,12 @@ class HUSTSim(pl.LightningDataModule):
         test_dir = self._data_dir / "measure"
 
         fit_dirs = list(fit_dir.iterdir())
+        test_dirs = list(test_dir.iterdir())
         train_dirs, val_dirs = train_test_split(
             fit_dirs,
             test_size=0.2,
             stratify=_labels_from_dirs(fit_dirs),
         )
-        test_dirs = list(test_dir.iterdir())
 
         self._train_paths = _list_dirs(train_dirs)
         self._test_paths = _list_dirs(test_dirs)
