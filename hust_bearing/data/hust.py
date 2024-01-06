@@ -26,8 +26,8 @@ class HUSTSim(pl.LightningDataModule):
         self._datasets: dict[str, Spectrograms] = {}
 
     def prepare_data(self) -> None:
-        self._set_paths()
-        self._set_labels()
+        self._init_paths()
+        self._init_labels()
 
     def setup(self, stage: str) -> None:
         if stage == "fit":
@@ -61,12 +61,12 @@ class HUSTSim(pl.LightningDataModule):
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
 
-    def _set_paths(self) -> None:
+    def _init_paths(self) -> None:
         subdirs = _list_data_dir(self._data_dir, val_size=0.2)
         for split in {"train", "test", "val"}:
             self._paths[split] = _list_subdirs(subdirs[split])
 
-    def _set_labels(self) -> None:
+    def _init_labels(self) -> None:
         encoder_path = self._data_dir / "label_encoder.joblib"
         encoder = _load_encoder(encoder_path, _labels_from_paths(self._paths["train"]))
         for split in {"train", "test", "val"}:
