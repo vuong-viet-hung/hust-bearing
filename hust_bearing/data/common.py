@@ -1,4 +1,4 @@
-from abc import ABC, ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod
 from itertools import chain
 from pathlib import Path
 
@@ -14,39 +14,15 @@ from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import DataLoader
 
 
-class Downloader(ABC):
-    @abstractmethod
-    def download(self, data_dir: Path | str) -> None:
-        pass
-
-
-class DirNameParser(ABC):
-    @abstractmethod
-    def extract_label(self, dir_name: str) -> str:
-        pass
-
-    @abstractmethod
-    def extract_load(self, dir_name: str) -> str:
-        pass
-
-
 class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
-    def __init__(
-        self,
-        data_dir: Path | str,
-        batch_size: int,
-        downloader: Downloader,
-        dir_name_parser: DirNameParser,
-    ) -> None:
+    def __init__(self, data_dir: Path | str, batch_size: int) -> None:
         super().__init__()
         self.data_dir = Path(data_dir)
         self._batch_size = batch_size
-        self._downloader = downloader
-        self._dir_name_parser = dir_name_parser
 
     def prepare_data(self) -> None:
         if not self.data_dir.exists():
-            self._downloader.download(self.data_dir)
+            self.download()
         self.init_paths()
         self.init_labels()
 
@@ -73,11 +49,13 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
 
-    def extract_label(self, dir_name: str) -> str:
-        return self._dir_name_parser.extract_label(dir_name)
+    @abstractmethod
+    def download(self) -> None:
+        pass
 
-    def extract_load(self, dir_name: str) -> str:
-        return self._dir_name_parser.extract_load(dir_name)
+    @abstractmethod
+    def extract_label(self, dir_name: str) -> str:
+        pass
 
     @abstractmethod
     def init_paths(self) -> None:
@@ -104,15 +82,8 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
 
 
 class MeasuredSpectrogramDM(SpectrogramDM, metaclass=ABCMeta):
-    def __init__(
-        self,
-        data_dir: Path | str,
-        batch_size: int,
-        downloader: Downloader,
-        dir_name_parser: DirNameParser,
-        train_load: str,
-    ) -> None:
-        super().__init__(data_dir, batch_size, downloader, dir_name_parser)
+    def __init__(self, train_load: str, data_dir: Path | str, batch_size: int) -> None:
+        super().__init__(data_dir, batch_size)
         self._train_load = train_load
 
     def init_paths(self) -> None:
@@ -130,6 +101,10 @@ class MeasuredSpectrogramDM(SpectrogramDM, metaclass=ABCMeta):
         self.train_paths = _list_dirs(train_dirs)
         self.test_paths = _list_dirs(test_dirs)
         self.val_paths = _list_dirs(val_dirs)
+
+    @abstractmethod
+    def extract_load(self, dir_name: str) -> str:
+        pass
 
 
 class SimulatedSpectrogramDM(SpectrogramDM, metaclass=ABCMeta):
