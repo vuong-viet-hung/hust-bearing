@@ -40,12 +40,12 @@ The CLI interface is powered by LightningCLI. Refer to [this guide](https://ligh
 ### Model training
 Example of training the ConvMixer model on HUST Bearing dataset on training data of load type 0
 ```commandline
-poetry run hust-bearing fit --config=logs/fit-hust_0-conv_mixer/config.yaml
+hust-bearing fit --config=logs/fit-hust_0-conv_mixer/config.yaml
 ```
 
 ### Model evaluation
 ```commandline
-poetry run hust-bearing test --config=logs/test-hust_0-conv_mixer/config.yaml
+hust-bearing test --config=logs/test-hust_0-conv_mixer/config.yaml
 ```
 
 ## About Us
