@@ -1,5 +1,8 @@
 import re
+import tarfile
 from pathlib import Path
+
+import gdown
 
 from hust_bearing.data.common import SpectrogramDM
 
@@ -14,17 +17,23 @@ class HUST(SpectrogramDM):
         """,
         re.VERBOSE,
     )
+    _url = "https://drive.google.com/file/d/1AjDHJgnxnjrhW5biEirtK3s6IrFL7rFV/view?usp=sharing"
+    _download_file_path = Path("spectrograms.tar.gz")
 
     def __init__(
         self,
         train_load: str,
-        data_dir: Path | str = Path("spectrograms", "hust"),
+        root_dir: Path | str = Path(),
         batch_size: int = 32,
     ) -> None:
+        data_dir = root_dir / "spectrograms" / "hust"
         super().__init__(train_load, data_dir, batch_size)
+        self._root_dir = root_dir
 
     def download(self) -> None:
-        pass
+        gdown.download(self._url, str(self._download_file_path), fuzzy=True)
+        with tarfile.open(self._download_file_path) as tar:
+            tar.extractall(self._root_dir)
 
     def extract_label(self, dir_name: str) -> str:
         return self._parse(dir_name).group(1)

@@ -79,7 +79,7 @@ data:
   class_path: hust_bearing.data.HUST
   init_args:
     train_load: '0'
-    data_dir: spectrograms/hust
+    root_dir: .
     batch_size: 32
 optimizer:
   class_path: torch.optim.Adam

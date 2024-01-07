@@ -22,13 +22,14 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         batch_size: int,
     ) -> None:
         super().__init__()
-        self.data_dir = Path(data_dir)
         self._train_load = train_load
+        self._data_dir = Path(data_dir)
         self._batch_size = batch_size
+
         self._num_workers = multiprocessing.cpu_count()
 
     def prepare_data(self) -> None:
-        if not self.data_dir.exists():
+        if not self._data_dir.exists():
             self.download()
         self._init_paths()
         self._init_labels()
@@ -82,7 +83,7 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         self._test_paths = self._get_test_paths()
 
     def _init_labels(self) -> None:
-        encoder_path = self.data_dir / "label_encoder.joblib"
+        encoder_path = self._data_dir / "label_encoder.joblib"
         encoder = _load_encoder(encoder_path, self._get_train_labels())
 
         self._train_labels = encoder.transform(self._get_train_labels())
@@ -92,14 +93,14 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
     def _get_fit_paths(self) -> list[Path]:
         return [
             path
-            for path in self.data_dir.glob("**/*.mat")
+            for path in self._data_dir.glob("**/*.mat")
             if self.extract_load(path.parent.name) == self._train_load
         ]
 
     def _get_test_paths(self) -> list[Path]:
         return [
             path
-            for path in self.data_dir.glob("**/*.mat")
+            for path in self._data_dir.glob("**/*.mat")
             if self.extract_load(path.parent.name) != self._train_load
         ]
 
