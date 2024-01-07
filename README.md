@@ -53,7 +53,7 @@ spectrograms  <-- root directory
 ```
 
 ### Model training
-Example of training ConvMixer model on HUST Bearing datset
+Example of training ConvMixer model on HUST Bearing dataset
 ```commandline
 hust-bearing fit --config=logs/fit-hust_0-conv_mixer/version_0/config.yaml
 ```
