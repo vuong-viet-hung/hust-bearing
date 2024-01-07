@@ -5,4 +5,5 @@ __pycache__/
 *.ipynb
 *.joblib
 *.mat
+*.tar.gz
 events.out.tfevents.*
