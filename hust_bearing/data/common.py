@@ -93,7 +93,7 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         return [self.extract_label(path.parent.name) for path in self._train_paths]
 
     def _get_test_labels(self) -> list[str]:
-        return [self.extract_label(path.parent.name) for path in self.test_paths]
+        return [self.extract_label(path.parent.name) for path in self._test_paths]
 
     def _get_val_labels(self) -> list[str]:
         return [self.extract_label(path.parent.name) for path in self._val_paths]
