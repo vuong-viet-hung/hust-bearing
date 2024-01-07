@@ -5,7 +5,7 @@
 
 ## Introduction
 This repository contains researches dedicated to classification of bearing fault based on vibrational signals' spectrograms, using deep neural network to identify the type of defect.
-The project provides an intuitive CLI interface for proposed algorithms.
+The project provides an intuitive CLI for proposed algorithms.
 We prioritize presenting previous researches in a readable and reproducible manner over introducing a faithful implementation.
 
 The team behind this work is [Mandevices Laboratory](https://www.facebook.com/mandeviceslaboratory) from Hanoi University of Science and Technology (HUST). Learn more about our researches [here](#about-us).
