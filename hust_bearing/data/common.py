@@ -29,8 +29,6 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         self._num_workers = multiprocessing.cpu_count()
 
     def prepare_data(self) -> None:
-        if not self._data_dir.exists():
-            self.download()
         self._init_paths()
         self._init_labels()
 
@@ -61,10 +59,6 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
 
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
-
-    @abstractmethod
-    def download(self) -> None:
-        pass
 
     @abstractmethod
     def extract_label(self, dir_name: str) -> str:
