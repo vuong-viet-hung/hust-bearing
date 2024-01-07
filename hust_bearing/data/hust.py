@@ -14,9 +14,6 @@ class HUST(SpectrogramDM):
         """,
         re.VERBOSE,
     )
-    _url = "https://drive.google.com/file/d/1AjDHJgnxnjrhW5biEirtK3s6IrFL7rFV/view?usp=sharing"
-    _download_file_path = Path("spectrograms.tar.gz")
-
     def __init__(
         self,
         train_load: str,
