@@ -40,7 +40,7 @@ The CLI interface is powered by LightningCLI. Refer to [this guide](https://ligh
 ### Data
 Obtain the dataset before advance to the proceeding steps
 
-Open-access data will be provided soon. As of now, [contact us](mailto:vuongviethung156@gmail.com) for the dataset.
+Open-access data will be provided soon. As of now, [contact us](mailto:vuongviethung156@gmail.com) for the dataset, or generating the dataset using the [accompanied reposistory](https://github.com/vuong-viet-hung/BearingSpectrogram.git).
 
 The dataset should be structured as such:
 ```
