@@ -38,7 +38,7 @@ Refer to [this guide](https://python-poetry.org/docs/basic-usage/#using-your-vir
 The CLI interface is powered by LightningCLI. Refer to [this guide](https://lightning.ai/docs/pytorch/stable/cli/lightning_cli.html) for advance usage.
 
 ### Model training
-Example of training the ConvMixer model on HUST Bearing dataset on training data of load type 0
+Example of training the ConvMixer model on HUST Bearing dataset using training data of load type 0
 ```commandline
 hust-bearing fit --config=logs/fit-hust_0-conv_mixer/config.yaml
 ```
