@@ -63,23 +63,12 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         pass
 
     def _init_paths(self) -> None:
-        paths = list(self.data_dir.glob("**/*.mat"))
-
-        fit_paths = [
-            path
-            for path in paths
-            if self.extract_load(path.parent.name) == self.train_load
-        ]
-        self._test_paths = [
-            path
-            for path in paths
-            if self.extract_load(path.parent.name) != self.train_load
-        ]
-
+        fit_paths = self._get_fit_paths()
         labels = [self.extract_label(path.parent.name) for path in fit_paths]
         self._train_paths, self._val_paths = train_test_split(
             fit_paths, test_size=0.2, stratify=labels
         )
+        self._test_paths = self._get_test_paths()
 
     def _init_labels(self) -> None:
         encoder_path = self.data_dir / "label_encoder.joblib"
@@ -88,6 +77,20 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         self._train_labels = encoder.transform(self._get_train_labels())
         self._test_labels = encoder.transform(self._get_test_labels())
         self._val_labels = encoder.transform(self._get_val_labels())
+
+    def _get_fit_paths(self) -> list[Path]:
+        return [
+            path
+            for path in self.data_dir.glob("**/*.mat")
+            if self.extract_load(path.parent.name) == self.train_load
+        ]
+
+    def _get_test_paths(self) -> list[Path]:
+        return [
+            path
+            for path in self.data_dir.glob("**/*.mat")
+            if self.extract_load(path.parent.name) != self.train_load
+        ]
 
     def _get_train_labels(self) -> list[str]:
         return [self.extract_label(path.parent.name) for path in self._train_paths]
@@ -120,11 +123,7 @@ class Spectrograms(Dataset):
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         spectrogram = _load_spectrogram(self._paths[idx])
         image = self._transform(spectrogram)
-        return image, self._labels[idx]
-
-
-def _list_dirs(dirs: list[Path]) -> list[Path]:
-    return list(chain.from_iterable(dir_.glob("*.mat") for dir_ in dirs))
+        return image, self._labels[idx]\
 
 
 def _load_encoder(encoder_path: Path, fit_labels: list[str]) -> LabelEncoder:
