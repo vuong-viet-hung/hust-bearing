@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from multiprocessing import cpu_count
 from pathlib import Path
 
 import lightning as pl
@@ -14,11 +15,18 @@ from torch.utils.data import DataLoader
 
 
 class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
-    def __init__(self, train_load: str, data_dir: Path | str, batch_size: int) -> None:
+    def __init__(
+        self,
+        train_load: str,
+        data_dir: Path | str,
+        batch_size: int,
+        num_workers=cpu_count(),
+    ) -> None:
         super().__init__()
-        self.train_load = train_load
         self.data_dir = Path(data_dir)
-        self.batch_size = batch_size
+        self._train_load = train_load
+        self._batch_size = batch_size
+        self._num_workers = num_workers
 
     def prepare_data(self) -> None:
         if not self.data_dir.exists():
@@ -38,13 +46,18 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
             self._test_ds = Spectrograms(self._test_paths, self._test_labels)
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(self._train_ds, self.batch_size, num_workers=8, shuffle=True)
+        return DataLoader(
+            self._train_ds,
+            self._batch_size,
+            num_workers=self._num_workers,
+            shuffle=True,
+        )
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self._test_ds, self.batch_size, num_workers=8)
+        return DataLoader(self._test_ds, self._batch_size, num_workers=self._num_workers)
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self._val_ds, self.batch_size, num_workers=8)
+        return DataLoader(self._val_ds, self._batch_size, num_workers=self._num_workers)
 
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
@@ -81,14 +94,14 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         return [
             path
             for path in self.data_dir.glob("**/*.mat")
-            if self.extract_load(path.parent.name) == self.train_load
+            if self.extract_load(path.parent.name) == self._train_load
         ]
 
     def _get_test_paths(self) -> list[Path]:
         return [
             path
             for path in self.data_dir.glob("**/*.mat")
-            if self.extract_load(path.parent.name) != self.train_load
+            if self.extract_load(path.parent.name) != self._train_load
         ]
 
     def _get_train_labels(self) -> list[str]:
