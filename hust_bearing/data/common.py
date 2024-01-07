@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from itertools import chain
 from pathlib import Path
 
 import lightning as pl
