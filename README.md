@@ -37,8 +37,23 @@ Refer to [this guide](https://python-poetry.org/docs/basic-usage/#using-your-vir
 
 The CLI interface is powered by LightningCLI. Refer to [this guide](https://lightning.ai/docs/pytorch/stable/cli/lightning_cli.html) for advance usage.
 
+### Data
+Open-access data will be provided soon. As of now, contact us through [this email](vuongviethung156@gmail.com) for the dataset.
+
+The dataset should be structured as such:
+```
+spectrograms  <-- root directory
+|---hust      <-- dataset directory
+|   |---B500  <-- directory containing spectrograms
+|   |---B502
+|   |   ...
+|   |---O504
+|---cwru
+    |   ...    
+```
+
 ### Model training
-Example of training the ConvMixer model on HUST Bearing dataset using training data of load type 0
+Example of training ConvMixer model on HUST Bearing datset
 ```commandline
 hust-bearing fit --config=logs/fit-hust_0-conv_mixer/version_0/config.yaml
 ```
