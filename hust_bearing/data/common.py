@@ -36,7 +36,7 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
             self._val_ds = Spectrograms(self._val_paths, self._val_labels)
 
         else:
-            self._test_ds = Spectrograms(self.test_paths, self._test_labels)
+            self._test_ds = Spectrograms(self._test_paths, self._test_labels)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(self._train_ds, self.batch_size, num_workers=8, shuffle=True)
