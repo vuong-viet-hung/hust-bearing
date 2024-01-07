@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from multiprocessing import cpu_count
+import multiprocessing
 from pathlib import Path
 
 import lightning as pl
@@ -20,13 +20,12 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         train_load: str,
         data_dir: Path | str,
         batch_size: int,
-        num_workers=cpu_count(),
     ) -> None:
         super().__init__()
         self.data_dir = Path(data_dir)
         self._train_load = train_load
         self._batch_size = batch_size
-        self._num_workers = num_workers
+        self._num_workers = multiprocessing.cpu_count()
 
     def prepare_data(self) -> None:
         if not self.data_dir.exists():
