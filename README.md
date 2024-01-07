@@ -38,6 +38,8 @@ Refer to [this guide](https://python-poetry.org/docs/basic-usage/#using-your-vir
 The CLI interface is powered by LightningCLI. Refer to [this guide](https://lightning.ai/docs/pytorch/stable/cli/lightning_cli.html) for advance usage.
 
 ### Data
+Obtain the dataset before advance to the proceeding steps
+
 Open-access data will be provided soon. As of now, [contact us](mailto:vuongviethung156@gmail.com) for the dataset.
 
 The dataset should be structured as such:
