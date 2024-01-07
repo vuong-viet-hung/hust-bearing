@@ -35,19 +35,14 @@ poetry install
 ## Usage
 Refer to [this guide](https://python-poetry.org/docs/basic-usage/#using-your-virtual-environment) on how to execute commands inside virtual environment.
 
-The CLI interface is powered by LightningCLI. Refer to [this guide](https://lightning.ai/docs/pytorch/stable/cli/lightning_cli.html) for advance usage.
-
-Get help
-```commandline
-hust-bearing --help
-```
+The CLI is powered by LightningCLI. Refer to [this guide](https://lightning.ai/docs/pytorch/stable/cli/lightning_cli.html) for advanced usage.
 
 ### Data
 Obtain the dataset before advance to the proceeding steps
 
 Open-access data will be provided soon. As of now:
 - [Contact us](mailto:vuongviethung156@gmail.com) for the dataset.
-- Generating the dataset using [accompany repository](https://github.com/vuong-viet-hung/BearingSpectrogram.git).
+- Generating the dataset using the [accompanied repository](https://github.com/vuong-viet-hung/BearingSpectrogram.git).
 
 The dataset should be structured as such:
 ```
