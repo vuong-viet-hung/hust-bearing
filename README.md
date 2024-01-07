@@ -35,7 +35,7 @@ poetry install
 ## Usage
 Refer to [this guide](https://python-poetry.org/docs/basic-usage/#using-your-virtual-environment) on how to execute commands inside virtual environment.
 
-The CLI interface is powered by LightningCLI. Refer to [this guide]([LightningCLI](https://lightning.ai/docs/pytorch/stable/cli/lightning_cli.html)) for advance usage.
+The CLI interface is powered by LightningCLI. Refer to [this guide](https://lightning.ai/docs/pytorch/stable/cli/lightning_cli.html) for advance usage.
 
 ### Model training
 Example of training the ConvMixer model on HUST Bearing dataset on training data of load type 0
