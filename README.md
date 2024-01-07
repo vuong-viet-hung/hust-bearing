@@ -1,14 +1,14 @@
 # HUST Bearing (Work in Progress)
 <p align="center">
-    <img src="assests/mandevices_logo.jpg">
+    <img src="assets/mandevices_logo.jpg">
 </p>
 
 ## Introduction
-This repository contains researches dedicated to classification of bearing fault based on vibarational signals' spectrograms, using deep neural network to identify the type of defect.
+This repository contains researches dedicated to classification of bearing fault based on vibrational signals' spectrograms, using deep neural network to identify the type of defect.
 The project provides an intuitive CLI interface for proposed algorithms.
 We prioritize presenting previous researches in a readable and reproducible manner over introducing a faithful implementation.
 
-The team behind this work is [Mandevices Laboratory](https://www.facebook.com/mandeviceslaboratory) from Hanoi University of Science and Technology (HUST). Learn more about our reseaches [here](#about-us).
+The team behind this work is [Mandevices Laboratory](https://www.facebook.com/mandeviceslaboratory) from Hanoi University of Science and Technology (HUST). Learn more about our researches [here](#about-us).
 
 ## Prerequisite
 - CUDA-enabled GPU
@@ -47,7 +47,7 @@ Obtain the dataset before advance to the proceeding steps
 
 Open-access data will be provided soon. As of now:
 - [Contact us](mailto:vuongviethung156@gmail.com) for the dataset.
-- Generating the dataset using the [accompany reposistory](https://github.com/vuong-viet-hung/BearingSpectrogram.git).
+- Generating the dataset using [accompany repository](https://github.com/vuong-viet-hung/BearingSpectrogram.git).
 
 The dataset should be structured as such:
 ```
