@@ -1,6 +1,6 @@
 from lightning.pytorch.cli import LightningCLI
 
-from hust_bearing.data import HUST, HUSTSim
+from hust_bearing.data import HUST
 from hust_bearing.models import LeNet5, ConvMixer
 
 
