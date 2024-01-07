@@ -10,7 +10,7 @@ trainer:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs
-      name: test-conv_mixer-0
+      name: test-hust_0-conv_mixer
       version: null
       log_graph: false
       default_hp_metric: true
@@ -70,7 +70,7 @@ trainer:
   sync_batchnorm: false
   reload_dataloaders_every_n_epochs: 0
   default_root_dir: null
-ckpt_path: logs/fit-conv_mixer-0/version_0/checkpoints/epoch=36-step=2775.ckpt
+ckpt_path: logs/fit-hust_0-conv_mixer/version_0/checkpoints/epoch=36-step=2775.ckpt
 verbose: true
 model:
   class_path: hust_bearing.models.ConvMixer
