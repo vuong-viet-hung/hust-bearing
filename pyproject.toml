@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "hust-bearing"
 version = "0.1.0"
-description = ""
+description = "Researches dedicated to bearing fault diagnosis from Mandevices Laboratory"
 authors = ["vuong-viet-hung <vuongviethung156@gmail.com>"]
 readme = "README.md"
 
