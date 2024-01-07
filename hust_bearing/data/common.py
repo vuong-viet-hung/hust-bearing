@@ -122,7 +122,7 @@ class Spectrograms(Dataset):
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         spectrogram = _load_spectrogram(self._paths[idx])
         image = self._transform(spectrogram)
-        return image, self._labels[idx]\
+        return image, self._labels[idx]
 
 
 def _load_encoder(encoder_path: Path, fit_labels: list[str]) -> LabelEncoder:
