@@ -14,10 +14,11 @@ class HUST(SpectrogramDM):
         """,
         re.VERBOSE,
     )
+
     def __init__(
         self,
         train_load: str,
-        data_dir: Path | str = Path(),
+        data_dir: Path | str = Path("spectrograms", "hust"),
         batch_size: int = 32,
     ) -> None:
         super().__init__(train_load, data_dir, batch_size)
