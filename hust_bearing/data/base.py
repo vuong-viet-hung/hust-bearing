@@ -132,11 +132,11 @@ class Spectrograms(Dataset):
         return image, self._labels[idx]
 
 
-def _load_encoder(encoder_path: Path, fit_labels: list[str]) -> LabelEncoder:
+def _load_encoder(encoder_path: Path, labels: list[str]) -> LabelEncoder:
     if encoder_path.exists():
         return joblib.load(encoder_path)
     encoder = LabelEncoder()
-    encoder.fit(fit_labels)
+    encoder.fit(labels)
     joblib.dump(encoder, encoder_path)
     return encoder
 
