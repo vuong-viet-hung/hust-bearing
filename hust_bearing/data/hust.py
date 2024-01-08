@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from hust_bearing.data.common import SpectrogramDM
+from hust_bearing.data.base import SpectrogramDM
 
 
 class HUST(SpectrogramDM):
