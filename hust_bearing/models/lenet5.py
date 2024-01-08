@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn.functional import max_pool2d, relu
 
-from hust_bearing.models.base import ClassificationModel
+from hust_bearing.models import ClassificationModel
 
 
 class LeNet5Clf(nn.Module):
