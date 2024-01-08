@@ -61,16 +61,16 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         return self.test_dataloader()
 
     @abstractmethod
-    def extract_label(self, dir_name: str) -> str:
+    def _extract_label(self, dir_name: str) -> str:
         pass
 
     @abstractmethod
-    def extract_load(self, dir_name: str) -> str:
+    def _extract_load(self, dir_name: str) -> str:
         pass
 
     def _init_paths(self) -> None:
         fit_paths = self._get_fit_paths()
-        fit_labels = [self.extract_label(path.parent.name) for path in fit_paths]
+        fit_labels = [self._extract_label(path.parent.name) for path in fit_paths]
         self._train_paths, self._val_paths = train_test_split(
             fit_paths, test_size=0.2, stratify=fit_labels
         )
@@ -88,24 +88,24 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         return [
             path
             for path in self._data_dir.glob("**/*.mat")
-            if self.extract_load(path.parent.name) == self._train_load
+            if self._extract_load(path.parent.name) == self._train_load
         ]
 
     def _get_test_paths(self) -> list[Path]:
         return [
             path
             for path in self._data_dir.glob("**/*.mat")
-            if self.extract_load(path.parent.name) != self._train_load
+            if self._extract_load(path.parent.name) != self._train_load
         ]
 
     def _get_train_labels(self) -> list[str]:
-        return [self.extract_label(path.parent.name) for path in self._train_paths]
+        return [self._extract_label(path.parent.name) for path in self._train_paths]
 
     def _get_test_labels(self) -> list[str]:
-        return [self.extract_label(path.parent.name) for path in self._test_paths]
+        return [self._extract_label(path.parent.name) for path in self._test_paths]
 
     def _get_val_labels(self) -> list[str]:
-        return [self.extract_label(path.parent.name) for path in self._val_paths]
+        return [self._extract_label(path.parent.name) for path in self._val_paths]
 
 
 class Spectrograms(Dataset):

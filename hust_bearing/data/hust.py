@@ -22,10 +22,10 @@ class HUST(SpectrogramDM):
     ) -> None:
         super().__init__(train_load, data_dir, batch_size)
 
-    def extract_label(self, dir_name: str) -> str:
+    def _extract_label(self, dir_name: str) -> str:
         return self._parse(dir_name).group(1)
 
-    def extract_load(self, dir_name: str) -> str:
+    def _extract_load(self, dir_name: str) -> str:
         return self._parse(dir_name).group(3)
 
     def _parse(self, dir_name) -> re.Match[str]:
