@@ -70,9 +70,9 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
 
     def _init_paths(self) -> None:
         fit_paths = self._get_fit_paths()
-        labels = [self.extract_label(path.parent.name) for path in fit_paths]
+        fit_labels = [self.extract_label(path.parent.name) for path in fit_paths]
         self._train_paths, self._val_paths = train_test_split(
-            fit_paths, test_size=0.2, stratify=labels
+            fit_paths, test_size=0.2, stratify=fit_labels
         )
         self._test_paths = self._get_test_paths()
 
