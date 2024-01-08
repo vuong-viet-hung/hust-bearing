@@ -77,7 +77,7 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         self._test_paths = self._get_test_paths()
 
     def _init_labels(self) -> None:
-        encoder_path = self._data_dir / "label_encoder.joblib"
+        encoder_path = self._data_dir / ".encoder.joblib"
         encoder = _load_encoder(encoder_path, self._get_train_labels())
 
         self._train_labels = encoder.transform(self._get_train_labels())
