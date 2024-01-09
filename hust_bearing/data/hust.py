@@ -4,8 +4,8 @@ from pathlib import Path
 from hust_bearing.data import SpectrogramDM
 
 
-class HUST(SpectrogramDM):
-    _regex = re.compile(
+class HUSTParser(SpectrogramDM):
+    _dir_name_regex = re.compile(
         r"""
         ([a-zA-Z]+)  # Fault
         (\d)  # Bearing
@@ -15,22 +15,15 @@ class HUST(SpectrogramDM):
         re.VERBOSE,
     )
 
-    def __init__(
-        self,
-        train_load: str,
-        data_dir: Path | str = Path("spectrograms", "hust"),
-        batch_size: int = 32,
-    ) -> None:
-        super().__init__(train_load, data_dir, batch_size)
+    def _extract_label(self, path: Path | str) -> str:
+        return self._parse(path).group(1)
 
-    def _extract_label(self, dir_name: str) -> str:
-        return self._parse(dir_name).group(1)
+    def _extract_load(self, path: Path | str) -> str:
+        return self._parse(path).group(3)
 
-    def _extract_load(self, dir_name: str) -> str:
-        return self._parse(dir_name).group(3)
-
-    def _parse(self, dir_name) -> re.Match[str]:
-        match = self._regex.fullmatch(dir_name)
+    def _parse(self, path: Path | str) -> re.Match[str]:
+        dir_name = path.parent.name
+        match = self._dir_name_regex.fullmatch(dir_name)
         if match is None:
-            raise ValueError(f"Invalid directory name: {dir_name}")
+            raise ValueError(f"Invalid path: {path}")
         return match

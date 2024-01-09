@@ -13,12 +13,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import DataLoader
 
-from hust_bearing.data import HUST
+from hust_bearing.data import HUSTParser
 
 
 class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
     _parser_classes = {
-        "hust": HUST,
+        "hust": HUSTParser,
     }
 
     def __init__(
