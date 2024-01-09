@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.nn.functional import max_pool2d, relu
 
-from hust_bearing.models import ClassificationModel
+from hust_bearing.models import Classifier
 
 
 class LeNet5Clf(nn.Module):
@@ -22,7 +22,7 @@ class LeNet5Clf(nn.Module):
         return relu(self.fc3(fc2))
 
 
-class LeNet5(ClassificationModel):
+class LeNet5(Classifier):
     def __init__(self, num_classes: int) -> None:
         clf = LeNet5Clf(num_classes)
         super().__init__(clf, num_classes)
