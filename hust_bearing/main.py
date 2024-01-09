@@ -1,11 +1,11 @@
 from lightning.pytorch.cli import LightningCLI
 
-from hust_bearing.data import HUSTParser
-from hust_bearing.models import LeNet5, ConvMixer
+from hust_bearing.data import SpectrogramDM
+from hust_bearing.models import Classifier
 
 
 def cli_main():
-    cli = LightningCLI()
+    LightningCLI(Classifier, SpectrogramDM)
 
 
 if __name__ == "__main__":
