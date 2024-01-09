@@ -1,6 +1,4 @@
 import multiprocessing
-from abc import ABCMeta, abstractmethod
-from collections.abc import Sequence
 from pathlib import Path
 
 import lightning as pl
@@ -17,7 +15,7 @@ from torch.utils.data import DataLoader
 from hust_bearing.data import Parser, HUSTParser
 
 
-class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
+class SpectrogramDM(pl.LightningDataModule):
     _parser_classes: dict[str, type[Parser]] = {
         "hust": HUSTParser,
     }
@@ -72,53 +70,41 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
 
-    @abstractmethod
-    def _extract_label(self, dir_name: str) -> str:
-        pass
-
-    @abstractmethod
-    def _extract_load(self, dir_name: str) -> str:
-        pass
-
     def _init_paths(self) -> None:
-        paths = list(self._data_dir.glob("**/*.mat"))
+        paths = np.array(list(self._data_dir.glob("**/*.mat")))
         loads = self._extract_loads(paths)
 
-        fit_paths = [
-            path for path, load in zip(paths, loads) if load == self._train_load
-        ]
+        fit_paths = paths[loads == self._train_load]
         fit_labels = self._extract_labels(fit_paths)
         self._train_paths, self._val_paths = train_test_split(
             fit_paths, test_size=0.2, stratify=fit_labels
         )
 
-        self._test_paths = [
-            path for path, load in zip(paths, loads) if load != self._train_load
-        ]
+        self._test_paths = paths[loads != self._train_load]
 
     def _init_labels(self) -> None:
-        encoder_path = self._data_dir / ".encoder.joblib"
-        encoder = _load_encoder(encoder_path, self._extract_labels(self._train_paths))
-
         train_labels = self._extract_labels(self._train_paths)
         test_labels = self._extract_labels(self._test_paths)
         val_labels = self._extract_labels(self._val_paths)
+
+        encoder_path = self._data_dir / ".encoder.joblib"
+        encoder = _load_encoder(encoder_path, train_labels)
 
         self._train_labels = encoder.transform(train_labels)
         self._test_labels = encoder.transform(test_labels)
         self._val_labels = encoder.transform(val_labels)
 
-    def _extract_loads(self, paths: Sequence[Path | str]) -> list[str]:
-        return [self._parser.extract_load(path) for path in paths]
+    def _extract_loads(self, paths: np.ndarray) -> np.ndarray:
+        return np.vectorize(self._parser.extract_load)(paths)
 
-    def _extract_labels(self, paths: Sequence[Path | str]) -> list[str]:
-        return [self._parser.extract_label(path) for path in paths]
+    def _extract_labels(self, paths: np.ndarray) -> np.ndarray:
+        return np.vectorize(self._parser.extract_label)(paths)
 
 
 class Spectrograms(Dataset):
     def __init__(
         self,
-        paths: list[Path],
+        paths: np.ndarray,
         labels: np.ndarray,
     ) -> None:
         self._paths = paths
@@ -134,12 +120,12 @@ class Spectrograms(Dataset):
         return len(self._paths)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
-        spectrogram = _load_spectrogram(self._paths[idx])
+        spectrogram = _load_spectrogram(self._paths[idx])  # type: ignore
         image = self._transform(spectrogram)
         return image, self._labels[idx]
 
 
-def _load_encoder(encoder_path: Path | str, labels: list[str]) -> LabelEncoder:
+def _load_encoder(encoder_path: Path | str, labels: np.ndarray) -> LabelEncoder:
     if Path(encoder_path).exists():
         return joblib.load(encoder_path)
     encoder = LabelEncoder()
