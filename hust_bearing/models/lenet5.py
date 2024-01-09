@@ -2,10 +2,8 @@ import torch
 from torch import nn
 from torch.nn.functional import max_pool2d, relu
 
-from hust_bearing.models import Classifier
 
-
-class LeNet5Clf(nn.Module):
+class LeNet5(nn.Module):
     def __init__(self, num_classes: int) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=6, kernel_size=5)
@@ -20,9 +18,3 @@ class LeNet5Clf(nn.Module):
         fc1 = relu(self.fc1(conv2.flatten(start_dim=1)))
         fc2 = relu(self.fc2(fc1))
         return relu(self.fc3(fc2))
-
-
-class LeNet5(Classifier):
-    def __init__(self, num_classes: int) -> None:
-        clf = LeNet5Clf(num_classes)
-        super().__init__(clf, num_classes)
