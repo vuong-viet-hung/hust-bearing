@@ -1,3 +1,5 @@
+# pylint: disable=not-callable
+
 import torch
 from mlp_mixer_pytorch import MLPMixer
 from torch import nn

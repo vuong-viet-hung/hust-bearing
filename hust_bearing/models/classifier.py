@@ -2,6 +2,7 @@ from abc import ABCMeta
 
 import lightning as pl
 import torch
+from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import nn
 from torchmetrics.classification import MulticlassAccuracy
 
@@ -22,7 +23,7 @@ class Classifier(pl.LightningModule, metaclass=ABCMeta):
         self.test_acc = MulticlassAccuracy(num_classes)
         self.val_acc = MulticlassAccuracy(num_classes)
 
-    def training_step(self, batch: tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
+    def training_step(self, batch: tuple[torch.Tensor, torch.Tensor]) -> STEP_OUTPUT:
         inputs, targets = batch
         outputs = self.model(inputs)
         loss = self.loss(outputs, targets)

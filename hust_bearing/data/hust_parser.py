@@ -1,13 +1,11 @@
 import re
 from pathlib import Path
 
-from hust_bearing.data import Parser
-
 
 PathLike = Path | str
 
 
-class HUSTParser(Parser):
+class HUSTParser:
     _dir_name_regex = re.compile(
         r"""
         ([a-zA-Z]+)  # Fault

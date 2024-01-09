@@ -1,7 +1,7 @@
 import functools
 import multiprocessing
 from pathlib import Path
-from typing import Generic, NamedTuple, TypeVar
+from typing import Generic, NamedTuple, Protocol, TypeVar
 
 import lightning as pl
 import joblib
@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import Dataset, DataLoader
 
-from hust_bearing.data import Parser, HUSTParser
+from hust_bearing.data import HUSTParser
 
 
 PathLike = Path | str
@@ -24,6 +24,14 @@ class Splits(NamedTuple, Generic[T]):
     train: T
     test: T
     val: T
+
+
+class Parser(Protocol):
+    def extract_label(self, path: PathLike) -> str:
+        ...
+
+    def extract_load(self, path: PathLike) -> str:
+        ...
 
 
 class SpectrogramDM(pl.LightningDataModule):
@@ -43,7 +51,7 @@ class SpectrogramDM(pl.LightningDataModule):
         self._data_dir = Path(data_dir)
         self._parser = self._parser_classes[name]()
         self._ds_splits: Splits[SpectrogramDS] | None = None
-        self.SpectrogramDL = functools.partial(
+        self._create_dl = functools.partial(
             DataLoader, batch_size=batch_size, num_workers=multiprocessing.cpu_count()
         )
 
@@ -55,17 +63,17 @@ class SpectrogramDM(pl.LightningDataModule):
     def train_dataloader(self) -> DataLoader:
         if self._ds_splits is None:
             raise ValueError("Dataset hasn't been created")
-        return self.SpectrogramDL(self._ds_splits.train)
+        return self._create_dl(self._ds_splits.train)
 
     def test_dataloader(self) -> DataLoader:
         if self._ds_splits is None:
             raise ValueError("Dataset hasn't been created")
-        return self.SpectrogramDL(self._ds_splits.test)
+        return self._create_dl(self._ds_splits.test)
 
     def val_dataloader(self) -> DataLoader:
         if self._ds_splits is None:
             raise ValueError("Dataset hasn't been created")
-        return self.SpectrogramDL(self._ds_splits.val)
+        return self._create_dl(self._ds_splits.val)
 
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
