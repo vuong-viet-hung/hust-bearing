@@ -112,11 +112,11 @@ class SpectrogramDM(pl.LightningDataModule):
             SpectrogramDS(path_splits.val, label_splits.val),
         )
 
-    def _extract_loads(self, paths: np.ndarray) -> np.ndarray:
-        return np.vectorize(self._parser.extract_load)(paths)
-
     def _extract_labels(self, paths: np.ndarray) -> np.ndarray:
         return np.vectorize(self._parser.extract_label)(paths)
+
+    def _extract_loads(self, paths: np.ndarray) -> np.ndarray:
+        return np.vectorize(self._parser.extract_load)(paths)
 
 
 class SpectrogramDS(Dataset):
