@@ -5,15 +5,6 @@ import torch
 from torch import nn
 from torchmetrics.classification import MulticlassAccuracy
 
-from hust_bearing.models.conv_mixer import ConvMixer
-from hust_bearing.models.lenet5 import LeNet5
-
-
-MODEL_CLASSES: dict[str, type[nn.Module]] = {
-    "lenet5": LeNet5,
-    "conv_mixer": ConvMixer,
-}
-
 
 class Classifier(pl.LightningModule, metaclass=ABCMeta):
     def __init__(self, model: nn.Module, num_classes: int) -> None:
@@ -49,8 +40,3 @@ class Classifier(pl.LightningModule, metaclass=ABCMeta):
     def predict_step(self, batch: tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
         inputs, _ = batch
         return self.model(inputs).argmax(dim=1)
-
-
-def create_clf(name: str, num_classes: int) -> Classifier:
-    model = MODEL_CLASSES[name](num_classes)
-    return Classifier(model, num_classes)

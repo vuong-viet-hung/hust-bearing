@@ -14,13 +14,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import Dataset, DataLoader
 
-from hust_bearing.data.hust_parser import HUSTParser
-
-
-PARSER_CLASSES = {
-    "hust": HUSTParser,
-}
-
 
 T = TypeVar("T")
 
@@ -119,13 +112,6 @@ class SpectrogramDM(pl.LightningDataModule):
 
     def _extract_loads(self, paths: np.ndarray) -> np.ndarray:
         return np.vectorize(self._parser.extract_load)(paths)
-
-
-def create_dm(
-    name: str, data_dir: Path | str, train_load: str, batch_size: int
-) -> SpectrogramDM:
-    parser = PARSER_CLASSES[name]()
-    return SpectrogramDM(data_dir, batch_size, train_load, parser)
 
 
 class SpectrogramDS(Dataset):
