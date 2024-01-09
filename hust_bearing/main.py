@@ -19,15 +19,15 @@ PARSER_CLASSES: dict[str, type[Parser]] = {
 
 
 def cli_main():
-    LightningCLI(create_dm, create_clf)  # type: ignore
+    LightningCLI(spectrogram_dm, classifier)  # type: ignore
 
 
-def create_clf(name: str, num_classes: int) -> Classifier:
+def classifier(name: str, num_classes: int) -> Classifier:
     model = MODEL_CLASSES[name](num_classes)
     return Classifier(model, num_classes)
 
 
-def create_dm(
+def spectrogram_dm(
     name: str, data_dir: Path | str, train_load: str, batch_size: int
 ) -> SpectrogramDM:
     parser = PARSER_CLASSES[name]()
