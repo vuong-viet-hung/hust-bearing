@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import multiprocessing
 from pathlib import Path
+from typing import Protocol
 
 import lightning as pl
 import joblib
@@ -16,8 +17,16 @@ from torch.utils.data import DataLoader
 from hust_bearing.data import HUSTParser
 
 
+class Parser(Protocol):
+    def extract_label(self, path: Path) -> str:
+        ...
+
+    def extract_load(self, path: Path) -> str:
+        ...
+
+
 class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
-    _parser_classes = {
+    _parser_classes: dict[str, type[Parser]] = {
         "hust": HUSTParser,
     }
 
@@ -61,7 +70,9 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         )
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(self._test_ds, self._batch_size, num_workers=self._num_workers)
+        return DataLoader(
+            self._test_ds, self._batch_size, num_workers=self._num_workers
+        )
 
     def val_dataloader(self) -> DataLoader:
         return DataLoader(self._val_ds, self._batch_size, num_workers=self._num_workers)
@@ -78,43 +89,38 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         pass
 
     def _init_paths(self) -> None:
-        fit_paths = self._get_fit_paths()
-        fit_labels = [self._extract_label(path.parent.name) for path in fit_paths]
+        paths = list(self._data_dir.glob("**/*.mat"))
+        loads = self._extract_loads(paths)
+
+        fit_paths = [
+            path for path, load in zip(paths, loads) if load == self._train_load
+        ]
+        fit_labels = self._extract_labels(fit_paths)
         self._train_paths, self._val_paths = train_test_split(
             fit_paths, test_size=0.2, stratify=fit_labels
         )
-        self._test_paths = self._get_test_paths()
+
+        self._test_paths = [
+            path for path, load in zip(paths, loads) if load != self._train_load
+        ]
 
     def _init_labels(self) -> None:
         encoder_path = self._data_dir / ".encoder.joblib"
-        encoder = _load_encoder(encoder_path, self._get_train_labels())
+        encoder = _load_encoder(encoder_path, self._extract_labels(self._train_paths))
 
-        self._train_labels = encoder.transform(self._get_train_labels())
-        self._test_labels = encoder.transform(self._get_test_labels())
-        self._val_labels = encoder.transform(self._get_val_labels())
+        train_labels = self._extract_labels(self._train_paths)
+        test_labels = self._extract_labels(self._test_paths)
+        val_labels = self._extract_labels(self._val_paths)
 
-    def _get_fit_paths(self) -> list[Path]:
-        return [
-            path
-            for path in self._data_dir.glob("**/*.mat")
-            if self._parser._extract_load(path) == self._train_load
-        ]
+        self._train_labels = encoder.transform(train_labels)
+        self._test_labels = encoder.transform(test_labels)
+        self._val_labels = encoder.transform(val_labels)
 
-    def _get_test_paths(self) -> list[Path]:
-        return [
-            path
-            for path in self._data_dir.glob("**/*.mat")
-            if self._parser._extract_load(path) != self._train_load
-        ]
+    def _extract_loads(self, paths: list[Path | str]) -> list[str]:
+        return [self._parser.extract_load(path) for path in paths]
 
-    def _get_train_labels(self) -> list[str]:
-        return [self._parser._extract_label(path) for path in self._train_paths]
-
-    def _get_test_labels(self) -> list[str]:
-        return [self._parser._extract_label(path) for path in self._test_paths]
-
-    def _get_val_labels(self) -> list[str]:
-        return [self._parser._extract_label(path) for path in self._val_paths]
+    def _extract_labels(self, paths: list[Path | str]) -> list[str]:
+        return [self._parser.extract_label(path) for path in paths]
 
 
 class Spectrograms(Dataset):
