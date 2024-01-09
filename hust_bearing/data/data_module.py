@@ -1,7 +1,7 @@
-from abc import ABCMeta, abstractmethod
 import multiprocessing
+from abc import ABCMeta, abstractmethod
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Protocol
 
 import lightning as pl
 import joblib
@@ -14,15 +14,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import DataLoader
 
-from hust_bearing.data import HUSTParser
-
-
-class Parser(Protocol):
-    def extract_label(self, path: Path) -> str:
-        ...
-
-    def extract_load(self, path: Path) -> str:
-        ...
+from hust_bearing.data import Parser, HUSTParser
 
 
 class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
@@ -116,10 +108,10 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         self._test_labels = encoder.transform(test_labels)
         self._val_labels = encoder.transform(val_labels)
 
-    def _extract_loads(self, paths: list[Path | str]) -> list[str]:
+    def _extract_loads(self, paths: Sequence[Path | str]) -> list[str]:
         return [self._parser.extract_load(path) for path in paths]
 
-    def _extract_labels(self, paths: list[Path | str]) -> list[str]:
+    def _extract_labels(self, paths: Sequence[Path | str]) -> list[str]:
         return [self._parser.extract_label(path) for path in paths]
 
 
@@ -148,7 +140,7 @@ class Spectrograms(Dataset):
 
 
 def _load_encoder(encoder_path: Path | str, labels: list[str]) -> LabelEncoder:
-    if encoder_path.exists():
+    if Path(encoder_path).exists():
         return joblib.load(encoder_path)
     encoder = LabelEncoder()
     encoder.fit(labels)

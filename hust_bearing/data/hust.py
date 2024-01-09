@@ -1,10 +1,10 @@
 import re
 from pathlib import Path
 
-from hust_bearing.data import SpectrogramDM
+from hust_bearing.data import Parser
 
 
-class HUSTParser(SpectrogramDM):
+class HUSTParser(Parser):
     _dir_name_regex = re.compile(
         r"""
         ([a-zA-Z]+)  # Fault
@@ -15,14 +15,14 @@ class HUSTParser(SpectrogramDM):
         re.VERBOSE,
     )
 
-    def _extract_label(self, path: Path | str) -> str:
+    def extract_label(self, path: Path | str) -> str:
         return self._parse(path).group(1)
 
-    def _extract_load(self, path: Path | str) -> str:
+    def extract_load(self, path: Path | str) -> str:
         return self._parse(path).group(3)
 
     def _parse(self, path: Path | str) -> re.Match[str]:
-        dir_name = path.parent.name
+        dir_name = Path(path).parent.name
         match = self._dir_name_regex.fullmatch(dir_name)
         if match is None:
             raise ValueError(f"Invalid path: {path}")
