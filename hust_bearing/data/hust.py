@@ -2,9 +2,6 @@ import re
 from pathlib import Path
 
 
-PathLike = Path | str
-
-
 class HUSTParser:
     _dir_name_regex = re.compile(
         r"""
@@ -16,13 +13,13 @@ class HUSTParser:
         re.VERBOSE,
     )
 
-    def extract_label(self, path: PathLike) -> str:
+    def extract_label(self, path: Path | str) -> str:
         return self._parse(path).group(1)
 
-    def extract_load(self, path: PathLike) -> str:
+    def extract_load(self, path: Path | str) -> str:
         return self._parse(path).group(3)
 
-    def _parse(self, path: PathLike) -> re.Match[str]:
+    def _parse(self, path: Path | str) -> re.Match[str]:
         dir_name = Path(path).parent.name
         match = self._dir_name_regex.fullmatch(dir_name)
         if match is None:

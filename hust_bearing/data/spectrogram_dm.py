@@ -16,7 +16,6 @@ from torch.utils.data import Dataset, DataLoader
 from hust_bearing.data import HUSTParser
 
 
-PathLike = Path | str
 T = TypeVar("T")
 
 
@@ -27,10 +26,10 @@ class Splits(NamedTuple, Generic[T]):
 
 
 class Parser(Protocol):
-    def extract_label(self, path: PathLike) -> str:
+    def extract_label(self, path: Path | str) -> str:
         ...
 
-    def extract_load(self, path: PathLike) -> str:
+    def extract_load(self, path: Path | str) -> str:
         ...
 
 
@@ -43,7 +42,7 @@ class SpectrogramDM(pl.LightningDataModule):
         self,
         name: str,
         train_load: str,
-        data_dir: PathLike,
+        data_dir: Path | str,
         batch_size: int,
     ) -> None:
         super().__init__()
@@ -143,7 +142,7 @@ class SpectrogramDS(Dataset):
         return image, self._labels[idx]
 
 
-def _load_encoder(encoder_path: PathLike, labels: np.ndarray) -> LabelEncoder:
+def _load_encoder(encoder_path: Path | str, labels: np.ndarray) -> LabelEncoder:
     if Path(encoder_path).exists():
         return joblib.load(encoder_path)
     encoder = LabelEncoder()
@@ -152,6 +151,6 @@ def _load_encoder(encoder_path: PathLike, labels: np.ndarray) -> LabelEncoder:
     return encoder
 
 
-def _load_spectrogram(path: PathLike) -> torch.Tensor:
+def _load_spectrogram(path: Path | str) -> torch.Tensor:
     data = scipy.io.loadmat(str(path))
     return data["spec"].astype(np.float32)
