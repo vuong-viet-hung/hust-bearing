@@ -1,7 +1,8 @@
 import functools
 import multiprocessing
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Generic, NamedTuple, Protocol, TypeVar
+from typing import Generic, Protocol, TypeVar
 
 import lightning as pl
 import joblib
@@ -13,13 +14,19 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import Dataset, DataLoader
 
-from hust_bearing.data import HUSTParser
+from hust_bearing.data.hust_parser import HUSTParser
+
+
+PARSER_CLASSES = {
+    "hust": HUSTParser,
+}
 
 
 T = TypeVar("T")
 
 
-class Splits(NamedTuple, Generic[T]):
+@dataclass
+class Splits(Generic[T]):
     train: T
     test: T
     val: T
@@ -33,23 +40,18 @@ class Parser(Protocol):
         ...
 
 
-PARSER_CLASSES: dict[str, type[Parser]] = {
-    "hust": HUSTParser,
-}
-
-
 class SpectrogramDM(pl.LightningDataModule):
     def __init__(
         self,
-        name: str,
-        train_load: str,
         data_dir: Path | str,
         batch_size: int,
+        train_load: str,
+        parser: Parser,
     ) -> None:
         super().__init__()
-        self._train_load = train_load
         self._data_dir = Path(data_dir)
-        self._parser = PARSER_CLASSES[name]()
+        self._train_load = train_load
+        self._parser = parser
         self._ds_splits: Splits[SpectrogramDS] | None = None
         self._get_dl = functools.partial(
             DataLoader, batch_size=batch_size, num_workers=multiprocessing.cpu_count()
@@ -117,6 +119,13 @@ class SpectrogramDM(pl.LightningDataModule):
 
     def _extract_loads(self, paths: np.ndarray) -> np.ndarray:
         return np.vectorize(self._parser.extract_load)(paths)
+
+
+def create_dm(
+    name: str, data_dir: Path | str, train_load: str, batch_size: int
+) -> SpectrogramDM:
+    parser = PARSER_CLASSES[name]()
+    return SpectrogramDM(data_dir, batch_size, train_load, parser)
 
 
 class SpectrogramDS(Dataset):
