@@ -33,11 +33,12 @@ class Parser(Protocol):
         ...
 
 
-class SpectrogramDM(pl.LightningDataModule):
-    _parser_classes: dict[str, type[Parser]] = {
-        "hust": HUSTParser,
-    }
+PARSER_CLASSES: dict[str, type[Parser]] = {
+    "hust": HUSTParser,
+}
 
+
+class SpectrogramDM(pl.LightningDataModule):
     def __init__(
         self,
         name: str,
@@ -48,7 +49,7 @@ class SpectrogramDM(pl.LightningDataModule):
         super().__init__()
         self._train_load = train_load
         self._data_dir = Path(data_dir)
-        self._parser = self._parser_classes[name]()
+        self._parser = PARSER_CLASSES[name]()
         self._ds_splits: Splits[SpectrogramDS] | None = None
         self._get_dl = functools.partial(
             DataLoader, batch_size=batch_size, num_workers=multiprocessing.cpu_count()
