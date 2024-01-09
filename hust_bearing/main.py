@@ -19,7 +19,7 @@ PARSER_CLASSES: dict[str, type[Parser]] = {
 
 
 def cli_main():
-    LightningCLI(spectrogram_dm, classifier)  # type: ignore
+    LightningCLI(classifier, spectrogram_dm)  # type: ignore
 
 
 def classifier(name: str, num_classes: int) -> Classifier:
