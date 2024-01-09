@@ -13,15 +13,24 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import DataLoader
 
+from hust_bearing.data import HUST
+
 
 class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
+    _parser_classes = {
+        "hust": HUST,
+    }
+
     def __init__(
         self,
+        name: str,
         train_load: str,
         data_dir: Path | str,
         batch_size: int,
     ) -> None:
         super().__init__()
+        self._parser = self._parser_classes[name]()
+
         self._train_load = train_load
         self._data_dir = Path(data_dir)
         self._batch_size = batch_size
@@ -88,24 +97,24 @@ class SpectrogramDM(pl.LightningDataModule, metaclass=ABCMeta):
         return [
             path
             for path in self._data_dir.glob("**/*.mat")
-            if self._extract_load(path.parent.name) == self._train_load
+            if self._parser._extract_load(path) == self._train_load
         ]
 
     def _get_test_paths(self) -> list[Path]:
         return [
             path
             for path in self._data_dir.glob("**/*.mat")
-            if self._extract_load(path.parent.name) != self._train_load
+            if self._parser._extract_load(path) != self._train_load
         ]
 
     def _get_train_labels(self) -> list[str]:
-        return [self._extract_label(path.parent.name) for path in self._train_paths]
+        return [self._parser._extract_label(path) for path in self._train_paths]
 
     def _get_test_labels(self) -> list[str]:
-        return [self._extract_label(path.parent.name) for path in self._test_paths]
+        return [self._parser._extract_label(path) for path in self._test_paths]
 
     def _get_val_labels(self) -> list[str]:
-        return [self._extract_label(path.parent.name) for path in self._val_paths]
+        return [self._parser._extract_label(path) for path in self._val_paths]
 
 
 class Spectrograms(Dataset):
@@ -132,7 +141,7 @@ class Spectrograms(Dataset):
         return image, self._labels[idx]
 
 
-def _load_encoder(encoder_path: Path, labels: list[str]) -> LabelEncoder:
+def _load_encoder(encoder_path: Path | str, labels: list[str]) -> LabelEncoder:
     if encoder_path.exists():
         return joblib.load(encoder_path)
     encoder = LabelEncoder()
@@ -141,6 +150,6 @@ def _load_encoder(encoder_path: Path, labels: list[str]) -> LabelEncoder:
     return encoder
 
 
-def _load_spectrogram(path: Path) -> torch.Tensor:
+def _load_spectrogram(path: Path | str) -> torch.Tensor:
     data = scipy.io.loadmat(str(path))
     return data["spec"].astype(np.float32)
