@@ -18,7 +18,8 @@ from hust_bearing.data import Parser, HUSTParser
 
 
 PathLike = Path | str
-Split = Literal["train", "test", "val"]
+SplitName = Literal["train", "test", "val"]
+Splits = dict[SplitName, np.ndarray]
 
 
 class SpectrogramDM(pl.LightningDataModule):
@@ -37,7 +38,7 @@ class SpectrogramDM(pl.LightningDataModule):
         self._train_load = train_load
         self._data_dir = Path(data_dir)
         self._parser = self._parser_classes[name]()
-        self._ds_splits: dict[Split, SpectrogramDS] = {}
+        self._ds_splits: dict[SplitName, SpectrogramDS] = {}
         self.SpectrogramDL = functools.partial(
             DataLoader, batch_size=batch_size, num_workers=multiprocessing.cpu_count()
         )
@@ -59,7 +60,7 @@ class SpectrogramDM(pl.LightningDataModule):
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
 
-    def _get_path_splits(self) -> dict[Split, np.ndarray]:
+    def _get_path_splits(self) -> Splits:
         paths = np.array(list(self._data_dir.glob("**/*.mat")))
         loads = self._extract_loads(paths)
 
@@ -75,9 +76,7 @@ class SpectrogramDM(pl.LightningDataModule):
             "val": val_paths,
         }
 
-    def _get_label_splits(
-        self, path_splits: dict[Split, np.ndarray]
-    ) -> dict[Split, np.ndarray]:
+    def _get_label_splits(self, path_splits: Splits) -> Splits:
         train_labels = self._extract_labels(path_splits["train"])
         test_labels = self._extract_labels(path_splits["test"])
         val_labels = self._extract_labels(path_splits["val"])
@@ -90,7 +89,7 @@ class SpectrogramDM(pl.LightningDataModule):
             "val": encoder.transform(val_labels),
         }
 
-    def _set_ds_splits(self, path_splits, label_splits) -> None:
+    def _set_ds_splits(self, path_splits: Splits, label_splits: Splits) -> None:
         self._ds_splits["train"] = SpectrogramDS(
             path_splits["train"], label_splits["train"]
         )
