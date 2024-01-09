@@ -1,3 +1,1 @@
-from hust_bearing.models.classifier import Classifier
-from hust_bearing.models.lenet5 import LeNet5
-from hust_bearing.models.conv_mixer import ConvMixer
+from hust_bearing.models.classifier import create_clf
