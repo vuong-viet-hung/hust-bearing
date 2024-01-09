@@ -51,7 +51,7 @@ class SpectrogramDM(pl.LightningDataModule):
         self._data_dir = Path(data_dir)
         self._parser = self._parser_classes[name]()
         self._ds_splits: Splits[SpectrogramDS] | None = None
-        self._create_dl = functools.partial(
+        self._get_dl = functools.partial(
             DataLoader, batch_size=batch_size, num_workers=multiprocessing.cpu_count()
         )
 
@@ -63,17 +63,17 @@ class SpectrogramDM(pl.LightningDataModule):
     def train_dataloader(self) -> DataLoader:
         if self._ds_splits is None:
             raise ValueError("Dataset hasn't been created")
-        return self._create_dl(self._ds_splits.train)
+        return self._get_dl(self._ds_splits.train)
 
     def test_dataloader(self) -> DataLoader:
         if self._ds_splits is None:
             raise ValueError("Dataset hasn't been created")
-        return self._create_dl(self._ds_splits.test)
+        return self._get_dl(self._ds_splits.test)
 
     def val_dataloader(self) -> DataLoader:
         if self._ds_splits is None:
             raise ValueError("Dataset hasn't been created")
-        return self._create_dl(self._ds_splits.val)
+        return self._get_dl(self._ds_splits.val)
 
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
