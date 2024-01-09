@@ -8,15 +8,16 @@ from torchmetrics.classification import MulticlassAccuracy
 from hust_bearing.models import LeNet5, ConvMixer
 
 
-class Classifier(pl.LightningModule, metaclass=ABCMeta):
-    _model_classes: dict[str, type[nn.Module]] = {
-        "lenet5": LeNet5,
-        "conv_mixer": ConvMixer,
-    }
+MODEL_CLASSES: dict[str, type[nn.Module]] = {
+    "lenet5": LeNet5,
+    "conv_mixer": ConvMixer,
+}
 
+
+class Classifier(pl.LightningModule, metaclass=ABCMeta):
     def __init__(self, name: str, num_classes: int) -> None:
         super().__init__()
-        self.model = self._model_classes[name](num_classes)
+        self.model = MODEL_CLASSES[name](num_classes)
         self.loss = nn.CrossEntropyLoss()
         self.train_acc = MulticlassAccuracy(num_classes)
         self.test_acc = MulticlassAccuracy(num_classes)
