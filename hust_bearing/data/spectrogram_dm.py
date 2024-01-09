@@ -1,5 +1,7 @@
+import functools
 import multiprocessing
 from pathlib import Path
+from typing import Literal
 
 import lightning as pl
 import joblib
@@ -15,6 +17,10 @@ from torch.utils.data import DataLoader
 from hust_bearing.data import Parser, HUSTParser
 
 
+PathLike = Path | str
+Split = Literal["train", "test", "val"]
+
+
 class SpectrogramDM(pl.LightningDataModule):
     _parser_classes: dict[str, type[Parser]] = {
         "hust": HUSTParser,
@@ -24,75 +30,74 @@ class SpectrogramDM(pl.LightningDataModule):
         self,
         name: str,
         train_load: str,
-        data_dir: Path | str,
+        data_dir: PathLike,
         batch_size: int,
     ) -> None:
         super().__init__()
-        self._parser = self._parser_classes[name]()
-
         self._train_load = train_load
         self._data_dir = Path(data_dir)
-        self._batch_size = batch_size
-
-        self._num_workers = multiprocessing.cpu_count()
+        self._parser = self._parser_classes[name]()
+        self._ds_splits: dict[Split, SpectrogramDS] = {}
+        self.SpectrogramDL = functools.partial(
+            DataLoader, batch_size=batch_size, num_workers=multiprocessing.cpu_count()
+        )
 
     def prepare_data(self) -> None:
-        self._init_paths()
-        self._init_labels()
-
-    def setup(self, stage: str) -> None:
-        if stage == "fit":
-            self._train_ds = Spectrograms(self._train_paths, self._train_labels)
-            self._val_ds = Spectrograms(self._val_paths, self._val_labels)
-
-        elif stage == "validate":
-            self._val_ds = Spectrograms(self._val_paths, self._val_labels)
-
-        else:
-            self._test_ds = Spectrograms(self._test_paths, self._test_labels)
+        path_splits = self._get_path_splits()
+        label_splits = self._get_label_splits(path_splits)
+        self._set_ds_splits(path_splits, label_splits)
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self._train_ds,
-            self._batch_size,
-            num_workers=self._num_workers,
-            shuffle=True,
-        )
+        return self.SpectrogramDL(self._ds_splits["train"])
 
     def test_dataloader(self) -> DataLoader:
-        return DataLoader(
-            self._test_ds, self._batch_size, num_workers=self._num_workers
-        )
+        return self.SpectrogramDL(self._ds_splits["test"])
 
     def val_dataloader(self) -> DataLoader:
-        return DataLoader(self._val_ds, self._batch_size, num_workers=self._num_workers)
+        return self.SpectrogramDL(self._ds_splits["val"])
 
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
 
-    def _init_paths(self) -> None:
+    def _get_path_splits(self) -> dict[Split, np.ndarray]:
         paths = np.array(list(self._data_dir.glob("**/*.mat")))
         loads = self._extract_loads(paths)
 
         fit_paths = paths[loads == self._train_load]
         fit_labels = self._extract_labels(fit_paths)
-        self._train_paths, self._val_paths = train_test_split(
+        train_paths, val_paths = train_test_split(
             fit_paths, test_size=0.2, stratify=fit_labels
         )
+        test_paths = paths[loads != self._train_load]
+        return {
+            "train": train_paths,
+            "test": test_paths,
+            "val": val_paths,
+        }
 
-        self._test_paths = paths[loads != self._train_load]
-
-    def _init_labels(self) -> None:
-        train_labels = self._extract_labels(self._train_paths)
-        test_labels = self._extract_labels(self._test_paths)
-        val_labels = self._extract_labels(self._val_paths)
+    def _get_label_splits(
+        self, path_splits: dict[Split, np.ndarray]
+    ) -> dict[Split, np.ndarray]:
+        train_labels = self._extract_labels(path_splits["train"])
+        test_labels = self._extract_labels(path_splits["test"])
+        val_labels = self._extract_labels(path_splits["val"])
 
         encoder_path = self._data_dir / ".encoder.joblib"
         encoder = _load_encoder(encoder_path, train_labels)
+        return {
+            "train": encoder.transform(train_labels),
+            "test": encoder.transform(test_labels),
+            "val": encoder.transform(val_labels),
+        }
 
-        self._train_labels = encoder.transform(train_labels)
-        self._test_labels = encoder.transform(test_labels)
-        self._val_labels = encoder.transform(val_labels)
+    def _set_ds_splits(self, path_splits, label_splits) -> None:
+        self._ds_splits["train"] = SpectrogramDS(
+            path_splits["train"], label_splits["train"]
+        )
+        self._ds_splits["test"] = SpectrogramDS(
+            path_splits["test"], label_splits["test"]
+        )
+        self._ds_splits["val"] = SpectrogramDS(path_splits["val"], label_splits["val"])
 
     def _extract_loads(self, paths: np.ndarray) -> np.ndarray:
         return np.vectorize(self._parser.extract_load)(paths)
@@ -101,7 +106,7 @@ class SpectrogramDM(pl.LightningDataModule):
         return np.vectorize(self._parser.extract_label)(paths)
 
 
-class Spectrograms(Dataset):
+class SpectrogramDS(Dataset):
     def __init__(
         self,
         paths: np.ndarray,
@@ -125,7 +130,7 @@ class Spectrograms(Dataset):
         return image, self._labels[idx]
 
 
-def _load_encoder(encoder_path: Path | str, labels: np.ndarray) -> LabelEncoder:
+def _load_encoder(encoder_path: PathLike, labels: np.ndarray) -> LabelEncoder:
     if Path(encoder_path).exists():
         return joblib.load(encoder_path)
     encoder = LabelEncoder()
@@ -134,6 +139,6 @@ def _load_encoder(encoder_path: Path | str, labels: np.ndarray) -> LabelEncoder:
     return encoder
 
 
-def _load_spectrogram(path: Path | str) -> torch.Tensor:
+def _load_spectrogram(path: PathLike) -> torch.Tensor:
     data = scipy.io.loadmat(str(path))
     return data["spec"].astype(np.float32)
