@@ -4,6 +4,9 @@ from pathlib import Path
 from hust_bearing.data import Parser
 
 
+PathLike = Path | str
+
+
 class HUSTParser(Parser):
     _dir_name_regex = re.compile(
         r"""
@@ -15,13 +18,13 @@ class HUSTParser(Parser):
         re.VERBOSE,
     )
 
-    def extract_label(self, path: Path | str) -> str:
+    def extract_label(self, path: PathLike) -> str:
         return self._parse(path).group(1)
 
-    def extract_load(self, path: Path | str) -> str:
+    def extract_load(self, path: PathLike) -> str:
         return self._parse(path).group(3)
 
-    def _parse(self, path: Path | str) -> re.Match[str]:
+    def _parse(self, path: PathLike) -> re.Match[str]:
         dir_name = Path(path).parent.name
         match = self._dir_name_regex.fullmatch(dir_name)
         if match is None:
