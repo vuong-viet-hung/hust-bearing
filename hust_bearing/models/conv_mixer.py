@@ -3,10 +3,8 @@ from mlp_mixer_pytorch import MLPMixer
 from torch import nn
 from torch.nn.functional import gelu
 
-from hust_bearing.models import Classifier
 
-
-class ConvMixerClf(nn.Module):
+class ConvMixer(nn.Module):
     def __init__(self, num_classes: int) -> None:
         super().__init__()
         self.conv = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=3, padding=1)
@@ -25,9 +23,3 @@ class ConvMixerClf(nn.Module):
         conv = self.batch_norm(gelu(self.conv(inputs)))
         pool = self.pool(conv)
         return self.mixer(pool)
-
-
-class ConvMixer(Classifier):
-    def __init__(self, num_classes: int) -> None:
-        clf = ConvMixerClf(num_classes)
-        super().__init__(clf, num_classes)
