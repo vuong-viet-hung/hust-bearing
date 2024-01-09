@@ -9,10 +9,9 @@ import numpy as np
 import scipy
 import torch
 import torchvision
-from torch.utils.data import Dataset
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset, DataLoader
 
 from hust_bearing.data import Parser, HUSTParser
 
