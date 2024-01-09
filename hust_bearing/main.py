@@ -1,11 +1,11 @@
 from lightning.pytorch.cli import LightningCLI
 
-from hust_bearing.data import create_dm
-from hust_bearing.models import create_clf
+from hust_bearing.data import SpectrogramDM
+from hust_bearing.models import Classifier
 
 
 def cli_main():
-    LightningCLI(create_dm, create_clf)  # type: ignore
+    LightningCLI(Classifier, SpectrogramDM)
 
 
 if __name__ == "__main__":
