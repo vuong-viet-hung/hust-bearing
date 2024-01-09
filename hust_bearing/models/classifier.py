@@ -9,7 +9,7 @@ from hust_bearing.models import LeNet5, ConvMixer
 
 
 class Classifier(pl.LightningModule, metaclass=ABCMeta):
-    _model_classes = {
+    _model_classes: dict[str, type[nn.Module]] = {
         "lenet5": LeNet5,
         "conv_mixer": ConvMixer,
     }
