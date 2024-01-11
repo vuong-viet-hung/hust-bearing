@@ -134,11 +134,13 @@ class SpectrogramDM(pl.LightningDataModule):
             ds_splits.test,
             batch_size=self._batch_size,
             num_workers=self._num_workers,
+            shuffle=False,
         )
         val_dl = DataLoader(
             ds_splits.val,
             batch_size=self._batch_size,
             num_workers=self._num_workers,
+            shuffle=False,
         )
         return Splits(train_dl, test_dl, val_dl)
 
