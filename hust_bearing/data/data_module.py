@@ -49,9 +49,10 @@ class SpectrogramDM(pl.LightningDataModule):
         self._data_loaders: Splits[DataLoader] | None = None
 
     def prepare_data(self) -> None:
+        paths = np.array(list(self._data_dir.glob("**/*.mat")))
         # fmt: off
         self._data_loaders = (
-            self._split_into_paths()
+            self._split(paths)
             .map(self._to_datasets)
             .map(self._to_dataloaders)
         )
@@ -75,10 +76,8 @@ class SpectrogramDM(pl.LightningDataModule):
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
 
-    def _split_into_paths(self) -> Splits[npt.NDArray[np.object_]]:
-        paths = np.array(list(self._data_dir.glob("**/*.mat")))
+    def _split(self, paths: npt.NDArray[np.object_]) -> Splits[npt.NDArray[np.object_]]:
         loads = self._extract_loads(paths)
-
         fit_paths = paths[loads == self._train_load]
         fit_labels = self._extract_labels(fit_paths)
         train_paths, val_paths = train_test_split(
