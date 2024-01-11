@@ -42,7 +42,7 @@ class SpectrogramDM(pl.LightningDataModule):
     ) -> None:
         super().__init__()
         self._parser = parser
-        self._data_dir = Path(data_dir)
+        self._data_dir = data_dir
         self._batch_size = batch_size
         self._train_load = train_load
 
