@@ -99,8 +99,9 @@ class SpectrogramDM(pl.LightningDataModule):
         self, labels: Splits[npt.NDArray[np.str_]]
     ) -> Splits[npt.NDArray[np.int64]]:
         encoder = LabelEncoder()
+        encoder.fit(labels.train)
 
-        train_labels = encoder.fit_transform(labels.train)
+        train_labels = encoder.transform(labels.train)
         test_labels = encoder.transform(labels.test)
         val_labels = encoder.transform(labels.val)
 
