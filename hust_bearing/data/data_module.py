@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
 from hust_bearing.data.dataset import ImageClassificationDS as Dataset
-from hust_bearing.data.dataset import build_bearing_dataset
+from hust_bearing.data.dataset import bearing_dataset
 from hust_bearing.data.encoders import (
     Encoder,
     CWRUEncoder,
@@ -72,9 +72,9 @@ def bearing_data_module(
     ) = _split_bearing_data(paths, labels, loads, train_load, val_size)
 
     return ImageClassificationDM(
-        build_bearing_dataset(train_paths, train_labels),
-        build_bearing_dataset(test_paths, test_labels),
-        build_bearing_dataset(val_paths, val_labels),
+        bearing_dataset(train_paths, train_labels),
+        bearing_dataset(test_paths, test_labels),
+        bearing_dataset(val_paths, val_labels),
         batch_size,
     )
 
@@ -86,14 +86,10 @@ def _extract_from_bearing_data(
     encoder = encoder_cls()
     parser = parser_cls()
 
-    paths = _list_bearing_data(data_dir)
+    paths = np.array(list(data_dir.glob("*.mat")))
     labels = encoder.encode_labels(parser.extract_labels(paths))
     loads = parser.extract_loads(paths)
     return paths, labels, loads
-
-
-def _list_bearing_data(data_dir: Path) -> npt.NDArray[np.object_]:
-    return np.array(list(data_dir.glob("*.mat")))
 
 
 def _split_bearing_data(

@@ -31,7 +31,7 @@ class ImageClassificationDS(Dataset):
         return image, self._labels[idx]
 
 
-def build_bearing_dataset(
+def bearing_dataset(
     paths: npt.NDArray[np.object_], labels: npt.NDArray[np.int64]
 ) -> ImageClassificationDS:
     return ImageClassificationDS(
