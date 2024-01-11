@@ -58,19 +58,18 @@ class ImageClassificationDM(pl.LightningDataModule):
 
 
 def bearing_data_module(
-    name: DataName, data_dir: Path, batch_size: int, train_load: int, val_size: float
+    name: DataName, data_dir: Path, batch_size: int, train_load: int
 ) -> ImageClassificationDM:
     paths, labels, loads = _extract_from_bearing_data(name, data_dir)
 
-    (
-        train_paths,
-        test_paths,
-        val_paths,
-        train_labels,
-        test_labels,
-        val_labels,
-    ) = _split_bearing_data(paths, labels, loads, train_load, val_size)
+    fit_paths = paths[loads == train_load]
+    test_paths = paths[loads != train_load]
+    fit_labels = labels[loads == train_load]
+    test_labels = labels[loads != train_load]
 
+    train_paths, val_paths, train_labels, val_labels = train_test_split(
+        fit_paths, fit_labels, test_size=0.2, stratify=fit_labels
+    )
     return ImageClassificationDM(
         bearing_dataset(train_paths, train_labels),
         bearing_dataset(test_paths, test_labels),
@@ -90,28 +89,3 @@ def _extract_from_bearing_data(
     labels = encoder.encode_labels(parser.extract_labels(paths))
     loads = parser.extract_loads(paths)
     return paths, labels, loads
-
-
-def _split_bearing_data(
-    paths: npt.NDArray[np.object_],
-    labels: npt.NDArray[np.int64],
-    loads: npt.NDArray[np.int64],
-    train_load: int,
-    val_size: float,
-) -> tuple[
-    npt.NDArray[np.object_],
-    npt.NDArray[np.object_],
-    npt.NDArray[np.object_],
-    npt.NDArray[np.int64],
-    npt.NDArray[np.int64],
-    npt.NDArray[np.int64],
-]:
-    fit_paths = paths[loads == train_load]
-    test_paths = paths[loads != train_load]
-    fit_labels = labels[loads == train_load]
-    test_labels = labels[loads != train_load]
-
-    train_paths, val_paths, train_labels, val_labels = train_test_split(
-        fit_paths, fit_labels, test_size=val_size, stratify=fit_labels
-    )
-    return train_paths, test_paths, val_paths, train_labels, test_labels, val_labels
