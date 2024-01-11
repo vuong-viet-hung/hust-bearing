@@ -5,11 +5,11 @@ from abc import ABC, abstractmethod
 
 class Parser(ABC):
     @abstractmethod
-    def extract_label(self, path: Path | str) -> str:
+    def extract_label(self, path: Path) -> str:
         pass
 
     @abstractmethod
-    def extract_load(self, path: Path | str) -> str:
+    def extract_load(self, path: Path) -> str:
         pass
 
 
@@ -25,14 +25,14 @@ class CWRUParser(Parser):
         re.VERBOSE,
     )
 
-    def extract_label(self, path: Path | str) -> str:
+    def extract_label(self, path: Path) -> str:
         return self._parse(path).group(1)
 
-    def extract_load(self, path: Path | str) -> str:
+    def extract_load(self, path: Path) -> str:
         return self._parse(path).group(4)
 
-    def _parse(self, path: Path | str) -> re.Match[str]:
-        dir_name = Path(path).parent.name
+    def _parse(self, path: Path) -> re.Match[str]:
+        dir_name = path.parent.name
         match = self._dir_name_regex.fullmatch(dir_name)
         if match is None:
             raise ValueError
@@ -50,14 +50,14 @@ class HUSTParser(Parser):
         re.VERBOSE,
     )
 
-    def extract_label(self, path: Path | str) -> str:
+    def extract_label(self, path: Path) -> str:
         return self._parse(path).group(1)
 
-    def extract_load(self, path: Path | str) -> str:
+    def extract_load(self, path: Path) -> str:
         return self._parse(path).group(3)
 
-    def _parse(self, path: Path | str) -> re.Match[str]:
-        dir_name = Path(path).parent.name
+    def _parse(self, path: Path) -> re.Match[str]:
+        dir_name = path.parent.name
         match = self._dir_name_regex.fullmatch(dir_name)
         if match is None:
             raise ValueError

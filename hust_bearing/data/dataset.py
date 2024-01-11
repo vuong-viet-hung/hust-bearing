@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 import scipy
 import torch
 import torchvision
@@ -10,8 +11,8 @@ from torch.utils.data import Dataset
 class SpectrogramDS(Dataset):
     def __init__(
         self,
-        paths: np.ndarray,
-        labels: np.ndarray,
+        paths: npt.NDArray[np.object_],
+        labels: npt.NDArray[np.int64],
     ) -> None:
         self._paths = paths
         self._labels = torch.from_numpy(labels)
@@ -31,6 +32,6 @@ class SpectrogramDS(Dataset):
         return image, self._labels[idx]
 
 
-def _load_spectrogram(path: Path | str) -> torch.Tensor:
+def _load_spectrogram(path: Path) -> torch.Tensor:
     data = scipy.io.loadmat(str(path))
     return data["spec"].astype(np.float32)

@@ -35,7 +35,7 @@ def model(name: ModelName, num_classes: int) -> Classifier:
 
 
 def data_module(
-    name: DataName, data_dir: Path | str, batch_size: int, train_load: str
+    name: DataName, data_dir: Path, batch_size: int, train_load: str
 ) -> SpectrogramDM:
     parser = PARSER_CLASSES[name]()
     return SpectrogramDM(parser, data_dir, batch_size, train_load)

@@ -9,6 +9,7 @@ from typing import Callable, Generic, TypeVar
 import lightning as pl
 import joblib
 import numpy as np
+import numpy.typing as npt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import DataLoader
@@ -35,7 +36,7 @@ class SpectrogramDM(pl.LightningDataModule):
     def __init__(
         self,
         parser: Parser,
-        data_dir: Path | str,
+        data_dir: Path,
         batch_size: int,
         train_load: str,
     ) -> None:
@@ -75,7 +76,7 @@ class SpectrogramDM(pl.LightningDataModule):
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
 
-    def _create_path_splits(self) -> Splits[np.ndarray]:
+    def _create_path_splits(self) -> Splits[npt.NDArray[np.object_]]:
         paths = np.array(list(self._data_dir.glob("**/*.mat")))
         loads = self._extract_loads(paths)
 
@@ -88,24 +89,29 @@ class SpectrogramDM(pl.LightningDataModule):
         return Splits(train_paths, test_paths, val_paths)
 
     def _create_label_splits(
-        self, path_splits: Splits[np.ndarray]
-    ) -> Splits[np.ndarray]:
+        self, path_splits: Splits[npt.NDArray[np.object_]]
+    ) -> Splits[npt.NDArray[np.str_]]:
         train_labels = self._extract_labels(path_splits.train)
         test_labels = self._extract_labels(path_splits.test)
         val_labels = self._extract_labels(path_splits.val)
+
         return Splits(train_labels, test_labels, val_labels)
 
     def _encode_label_splits(
-        self, label_splits: Splits[np.ndarray]
-    ) -> Splits[np.ndarray]:
+        self, label_splits: Splits[npt.NDArray[np.str_]]
+    ) -> Splits[npt.NDArray[np.int64]]:
         encoder_path = self._data_dir / ".encoder.joblib"
         encoder = _load_encoder(encoder_path, label_splits.train)
+
         train_labels = encoder.transform(label_splits.train)
         test_labels = encoder.transform(label_splits.test)
         val_labels = encoder.transform(label_splits.val)
+
         return Splits(train_labels, test_labels, val_labels)
 
-    def _create_ds_splits(self, path_splits: Splits[np.ndarray]) -> Splits:
+    def _create_ds_splits(
+        self, path_splits: Splits[npt.NDArray[np.object_]]
+    ) -> Splits[SpectrogramDS]:
         # fmt: off
         label_splits = (
             path_splits
@@ -113,40 +119,40 @@ class SpectrogramDM(pl.LightningDataModule):
             .map(self._encode_label_splits)
         )
         # fmt: on
-        return Splits(
-            SpectrogramDS(path_splits.train, label_splits.train),
-            SpectrogramDS(path_splits.test, label_splits.test),
-            SpectrogramDS(path_splits.val, label_splits.val),
-        )
+        train_ds = SpectrogramDS(path_splits.train, label_splits.train)
+        test_ds = SpectrogramDS(path_splits.test, label_splits.test)
+        val_ds = SpectrogramDS(path_splits.val, label_splits.val)
 
-    def _create_dl_splits(self, ds_splits: Splits) -> Splits:
-        return Splits(
-            DataLoader(
-                ds_splits.train,
-                batch_size=self._batch_size,
-                num_workers=self._num_workers,
-            ),
-            DataLoader(
-                ds_splits.test,
-                batch_size=self._batch_size,
-                num_workers=self._num_workers,
-            ),
-            DataLoader(
-                ds_splits.val,
-                batch_size=self._batch_size,
-                num_workers=self._num_workers,
-            ),
-        )
+        return Splits(train_ds, test_ds, val_ds)
 
-    def _extract_labels(self, paths: np.ndarray) -> np.ndarray:
+    def _create_dl_splits(self, ds_splits: Splits) -> Splits[DataLoader]:
+        train_dl = DataLoader(
+            ds_splits.train,
+            batch_size=self._batch_size,
+            num_workers=self._num_workers,
+            shuffle=True,
+        )
+        test_dl = DataLoader(
+            ds_splits.test,
+            batch_size=self._batch_size,
+            num_workers=self._num_workers,
+        )
+        val_dl = DataLoader(
+            ds_splits.val,
+            batch_size=self._batch_size,
+            num_workers=self._num_workers,
+        )
+        return Splits(train_dl, test_dl, val_dl)
+
+    def _extract_labels(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
         return np.vectorize(self._parser.extract_label)(paths)
 
-    def _extract_loads(self, paths: np.ndarray) -> np.ndarray:
+    def _extract_loads(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
         return np.vectorize(self._parser.extract_load)(paths)
 
 
-def _load_encoder(encoder_path: Path | str, labels: np.ndarray) -> LabelEncoder:
-    if Path(encoder_path).exists():
+def _load_encoder(encoder_path: Path, labels: npt.NDArray[np.str_]) -> LabelEncoder:
+    if encoder_path.exists():
         return joblib.load(encoder_path)
     encoder = LabelEncoder()
     encoder.fit(labels)
