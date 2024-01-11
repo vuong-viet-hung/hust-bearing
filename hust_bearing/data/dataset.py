@@ -9,7 +9,7 @@ import torchvision
 from torch.utils.data import Dataset
 
 
-class ImageClassificationDataset(Dataset):
+class ImageClassificationDS(Dataset):
     def __init__(
         self,
         paths: npt.NDArray[np.object_],
@@ -33,8 +33,8 @@ class ImageClassificationDataset(Dataset):
 
 def build_bearing_dataset(
     paths: npt.NDArray[np.object_], labels: npt.NDArray[np.int64]
-) -> ImageClassificationDataset:
-    return ImageClassificationDataset(
+) -> ImageClassificationDS:
+    return ImageClassificationDS(
         paths, labels, _load_spectrogram, _build_default_transform((64, 64))
     )
 

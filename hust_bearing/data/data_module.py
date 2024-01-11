@@ -8,7 +8,7 @@ import numpy.typing as npt
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
-from hust_bearing.data.dataset import ImageClassificationDataset as Dataset
+from hust_bearing.data.dataset import ImageClassificationDS as Dataset
 from hust_bearing.data.dataset import build_bearing_dataset
 from hust_bearing.data.encoders import (
     Encoder,
@@ -31,7 +31,7 @@ BEARING_DATA_CLASSES: dict[DataName, tuple[type[Encoder], type[Parser]]] = {
 }
 
 
-class ImageClassificationDataModule(pl.LightningDataModule):
+class ImageClassificationDM(pl.LightningDataModule):
     def __init__(
         self, train_ds: Dataset, test_ds: Dataset, val_ds: Dataset, batch_size: int
     ):
@@ -63,7 +63,7 @@ class ImageClassificationDataModule(pl.LightningDataModule):
 
 def bearing_data_module(
     name: DataName, data_dir: Path, batch_size: int, train_load: int, val_size: float
-) -> ImageClassificationDataModule:
+) -> ImageClassificationDM:
     paths, labels, loads = _extract_from_bearing_data(name, data_dir)
 
     (
@@ -75,7 +75,7 @@ def bearing_data_module(
         val_labels,
     ) = _split_bearing_data(paths, labels, loads, train_load, val_size)
 
-    return ImageClassificationDataModule(
+    return ImageClassificationDM(
         build_bearing_dataset(train_paths, train_labels),
         build_bearing_dataset(test_paths, test_labels),
         build_bearing_dataset(val_paths, val_labels),
