@@ -8,12 +8,12 @@ from hust_bearing.models import Classifier, LeNet5, ConvMixer
 from hust_bearing.data import SpectrogramDM, Parser, CWRUParser, HUSTParser
 
 
-ModelName = Literal["lenet5", "convmixer"]
+ModelName = Literal["lenet5", "conv_mixer"]
 
 
 MODEL_CLASSES: dict[ModelName, type[nn.Module]] = {
     "lenet5": LeNet5,
-    "convmixer": ConvMixer,
+    "conv_mixer": ConvMixer,
 }
 
 
