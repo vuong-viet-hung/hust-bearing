@@ -35,7 +35,7 @@ pylint = "^3.0.3"
 pytest = "^7.4.3"
 
 [tool.poetry.scripts]
-hust-bearing = "hust_bearing.main:cli_main"
+hust-bearing = "hust_bearing.main:main"
 
 [build-system]
 requires = ["poetry-core"]

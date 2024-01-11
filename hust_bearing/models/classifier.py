@@ -1,7 +1,21 @@
+from typing import Literal
+
 import lightning as pl
 import torch
 from torch import nn
 from torchmetrics.classification import MulticlassAccuracy
+
+from hust_bearing.models.lenet5 import LeNet5
+from hust_bearing.models.conv_mixer import ConvMixer
+
+
+ModelName = Literal["lenet5", "conv_mixer"]
+
+
+MODEL_CLASSES: dict[ModelName, type[nn.Module]] = {
+    "lenet5": LeNet5,
+    "conv_mixer": ConvMixer,
+}
 
 
 class Classifier(pl.LightningModule):
@@ -38,3 +52,8 @@ class Classifier(pl.LightningModule):
     def predict_step(self, batch: tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
         inputs, _ = batch
         return self.model(inputs).argmax(dim=1)
+
+
+def classifier(name: ModelName, num_classes: int) -> Classifier:
+    model = MODEL_CLASSES[name](num_classes)
+    return Classifier(model, num_classes)

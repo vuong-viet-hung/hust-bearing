@@ -1,2 +1,1 @@
-from hust_bearing.data.data_module import SpectrogramDM
-from hust_bearing.data.parsers import Parser, CWRUParser, HUSTParser
+from hust_bearing.data.data_module import bearing_data_module

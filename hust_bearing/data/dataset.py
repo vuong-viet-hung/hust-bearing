@@ -1,37 +1,55 @@
 from pathlib import Path
+from typing import Callable
 
+import scipy
 import numpy as np
 import numpy.typing as npt
-import scipy
 import torch
 import torchvision
 from torch.utils.data import Dataset
 
 
-class SpectrogramDS(Dataset):
+class ImageClassificationDataset(Dataset):
     def __init__(
         self,
         paths: npt.NDArray[np.object_],
         labels: npt.NDArray[np.int64],
+        load_image: Callable[[Path], npt.NDArray[np.float32]],
+        transform: Callable[[npt.NDArray], torch.Tensor],
     ) -> None:
         self._paths = paths
         self._labels = torch.from_numpy(labels)
-        self._transform = torchvision.transforms.Compose(
-            [
-                torchvision.transforms.ToTensor(),
-                torchvision.transforms.Resize((64, 64), antialias=None),
-            ]
-        )
+        self._read_image = load_image
+        self._transform = transform
 
     def __len__(self) -> int:
         return len(self._paths)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
-        spectrogram = _load_spectrogram(self._paths[idx])  # type: ignore
+        spectrogram = self._read_image(self._paths[idx])  # type: ignore
         image = self._transform(spectrogram)
         return image, self._labels[idx]
 
 
-def _load_spectrogram(path: Path) -> torch.Tensor:
+def build_bearing_dataset(
+    paths: npt.NDArray[np.object_], labels: npt.NDArray[np.int64]
+) -> ImageClassificationDataset:
+    return ImageClassificationDataset(
+        paths, labels, _load_spectrogram, _build_default_transform((64, 64))
+    )
+
+
+def _load_spectrogram(path: Path) -> npt.NDArray[np.float32]:
     data = scipy.io.loadmat(str(path))
     return data["spec"].astype(np.float32)
+
+
+def _build_default_transform(
+    image_size: tuple[int, int]
+) -> Callable[[npt.NDArray[np.float32]], torch.Tensor]:
+    return torchvision.transforms.Compose(
+        [
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Resize(image_size),
+        ]
+    )
