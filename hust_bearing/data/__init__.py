@@ -1,2 +1,2 @@
-from hust_bearing.data.spectrogram_dm import SpectrogramDM, Parser
-from hust_bearing.data.hust_parser import HUSTParser
+from hust_bearing.data.data_module import SpectrogramDM
+from hust_bearing.data.parsers import Parser, CWRUParser, HUSTParser

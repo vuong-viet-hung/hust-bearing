@@ -1,37 +1,44 @@
 from pathlib import Path
+from typing import Literal
 
 from lightning.pytorch.cli import LightningCLI
 from torch import nn
 
 from hust_bearing.models import Classifier, LeNet5, ConvMixer
-from hust_bearing.data import SpectrogramDM, Parser, HUSTParser
+from hust_bearing.data import SpectrogramDM, Parser, CWRUParser, HUSTParser
 
 
-MODEL_CLASSES: dict[str, type[nn.Module]] = {
+ModelName = Literal["lenet5", "convmixer"]
+
+
+MODEL_CLASSES: dict[ModelName, type[nn.Module]] = {
     "lenet5": LeNet5,
-    "conv_mixer": ConvMixer,
+    "convmixer": ConvMixer,
 }
 
 
-PARSER_CLASSES: dict[str, type[Parser]] = {
+DataName = Literal["cwru", "hust"]
+
+
+PARSER_CLASSES: dict[DataName, type[Parser]] = {
+    "cwru": CWRUParser,
     "hust": HUSTParser,
 }
 
 
 def cli_main():
-    LightningCLI(classifier, spectrogram_dm)  # type: ignore
+    LightningCLI(model, data_module)
 
 
-def classifier(name: str, num_classes: int) -> Classifier:
-    model = MODEL_CLASSES[name](num_classes)
-    return Classifier(model, num_classes)
+def model(name: ModelName, num_classes: int) -> Classifier:
+    return Classifier(MODEL_CLASSES[name](num_classes), num_classes)
 
 
-def spectrogram_dm(
-    name: str, data_dir: Path | str, train_load: str, batch_size: int
+def data_module(
+    name: DataName, data_dir: Path | str, batch_size: int, train_load: str
 ) -> SpectrogramDM:
     parser = PARSER_CLASSES[name]()
-    return SpectrogramDM(data_dir, batch_size, train_load, parser)
+    return SpectrogramDM(parser, data_dir, batch_size, train_load)
 
 
 if __name__ == "__main__":
