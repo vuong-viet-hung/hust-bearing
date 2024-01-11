@@ -1,8 +1,7 @@
-# pylint: disable=too-few-public-methods
-
 from __future__ import annotations
 
 import multiprocessing
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Generic, TypeVar
 
@@ -22,11 +21,11 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 
+@dataclass
 class Splits(Generic[T]):
-    def __init__(self, train: T, test: T, val: T) -> None:
-        self.train = train
-        self.test = test
-        self.val = val
+    train: T
+    test: T
+    val: T
 
     def map(self, func: Callable[[Splits[T]], Splits[U]]) -> Splits[U]:
         return func(self)
