@@ -60,7 +60,7 @@ class ImageClassificationDM(pl.LightningDataModule):
 def bearing_data_module(
     name: DataName, data_dir: Path, batch_size: int, train_load: int
 ) -> ImageClassificationDM:
-    paths, labels, loads = _extract_from_bearing_data(name, data_dir)
+    paths, labels, loads = _from_bearing_data(name, data_dir)
 
     fit_paths = paths[loads == train_load]
     test_paths = paths[loads != train_load]
@@ -78,7 +78,7 @@ def bearing_data_module(
     )
 
 
-def _extract_from_bearing_data(
+def _from_bearing_data(
     name: DataName, data_dir: Path
 ) -> tuple[npt.NDArray[np.object_], npt.NDArray[np.int64], npt.NDArray[np.int64]]:
     encoder_cls, parser_cls = BEARING_DATA_CLASSES[name]
