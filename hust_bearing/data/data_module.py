@@ -3,25 +3,31 @@ from pathlib import Path
 from typing import Literal
 
 import lightning as pl
+import numpy as np
+import numpy.typing as npt
+from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
 from hust_bearing.data.dataset import ImageClassificationDataset as Dataset
 from hust_bearing.data.dataset import build_bearing_dataset
-from hust_bearing.data.data import (
-    BearingData,
-    CWRU,
-    HUST,
-    list_bearing_data,
-    split_bearing_data,
+from hust_bearing.data.encoders import (
+    Encoder,
+    CWRUEncoder,
+    HUSTEncoder,
+)
+from hust_bearing.data.parsers import (
+    Parser,
+    CWRUParser,
+    HUSTParser,
 )
 
 
 DataName = Literal["cwru", "hust"]
 
 
-BEARING_DATA_CLASSES: dict[DataName, type[BearingData]] = {
-    "cwru": CWRU,
-    "hust": HUST,
+BEARING_DATA_CLASSES: dict[DataName, tuple[type[Encoder], type[Parser]]] = {
+    "cwru": (CWRUEncoder, CWRUParser),
+    "hust": (HUSTEncoder, HUSTParser),
 }
 
 
@@ -58,11 +64,7 @@ class ImageClassificationDataModule(pl.LightningDataModule):
 def bearing_data_module(
     name: DataName, data_dir: Path, batch_size: int, train_load: int, val_size: float
 ) -> ImageClassificationDataModule:
-    bearing_data = BEARING_DATA_CLASSES[name]()
-
-    paths = list_bearing_data(data_dir)
-    labels = bearing_data.encode_labels(bearing_data.extract_labels(paths))
-    loads = bearing_data.extract_loads(paths)
+    paths, labels, loads = _extract_from_bearing_data(name, data_dir)
 
     (
         train_paths,
@@ -71,9 +73,53 @@ def bearing_data_module(
         train_labels,
         test_labels,
         val_labels,
-    ) = split_bearing_data(paths, labels, loads, train_load, val_size)
+    ) = _split_bearing_data(paths, labels, loads, train_load, val_size)
 
-    train_ds = build_bearing_dataset(train_paths, train_labels)
-    test_ds = build_bearing_dataset(test_paths, test_labels)
-    val_ds = build_bearing_dataset(val_paths, val_labels)
-    return ImageClassificationDataModule(train_ds, test_ds, val_ds, batch_size)
+    return ImageClassificationDataModule(
+        build_bearing_dataset(train_paths, train_labels),
+        build_bearing_dataset(test_paths, test_labels),
+        build_bearing_dataset(val_paths, val_labels),
+        batch_size,
+    )
+
+
+def _extract_from_bearing_data(
+    name: DataName, data_dir: Path
+) -> tuple[npt.NDArray[np.object_], npt.NDArray[np.int64], npt.NDArray[np.int64]]:
+    encoder_cls, parser_cls = BEARING_DATA_CLASSES[name]
+    encoder = encoder_cls()
+    parser = parser_cls()
+
+    paths = _list_bearing_data(data_dir)
+    labels = encoder.encode_labels(parser.extract_labels(paths))
+    loads = parser.extract_loads(paths)
+    return paths, labels, loads
+
+
+def _list_bearing_data(data_dir: Path) -> npt.NDArray[np.object_]:
+    return np.array(list(data_dir.glob("*.mat")))
+
+
+def _split_bearing_data(
+    paths: npt.NDArray[np.object_],
+    labels: npt.NDArray[np.int64],
+    loads: npt.NDArray[np.int64],
+    train_load: int,
+    val_size: float,
+) -> tuple[
+    npt.NDArray[np.object_],
+    npt.NDArray[np.object_],
+    npt.NDArray[np.object_],
+    npt.NDArray[np.int64],
+    npt.NDArray[np.int64],
+    npt.NDArray[np.int64],
+]:
+    fit_paths = paths[loads == train_load]
+    test_paths = paths[loads != train_load]
+    fit_labels = labels[loads == train_load]
+    test_labels = labels[loads != train_load]
+
+    train_paths, val_paths, train_labels, val_labels = train_test_split(
+        fit_paths, fit_labels, test_size=val_size, stratify=fit_labels
+    )
+    return train_paths, test_paths, val_paths, train_labels, test_labels, val_labels
