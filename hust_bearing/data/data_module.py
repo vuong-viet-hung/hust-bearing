@@ -99,8 +99,7 @@ class SpectrogramDM(pl.LightningDataModule):
     def _encode_label_splits(
         self, label_splits: Splits[npt.NDArray[np.str_]]
     ) -> Splits[npt.NDArray[np.int64]]:
-        encoder_path = self._data_dir / ".encoder.joblib"
-        encoder = _load_encoder(encoder_path, label_splits.train)
+        encoder = self._load_encoder(label_splits.train)
 
         train_labels = encoder.transform(label_splits.train)
         test_labels = encoder.transform(label_splits.test)
@@ -149,11 +148,11 @@ class SpectrogramDM(pl.LightningDataModule):
     def _extract_loads(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
         return np.vectorize(self._parser.extract_load)(paths)
 
-
-def _load_encoder(encoder_path: Path, labels: npt.NDArray[np.str_]) -> LabelEncoder:
-    if encoder_path.exists():
-        return joblib.load(encoder_path)
-    encoder = LabelEncoder()
-    encoder.fit(labels)
-    joblib.dump(encoder, encoder_path)
-    return encoder
+    def _load_encoder(self, labels: npt.NDArray[np.str_]) -> LabelEncoder:
+        encoder_path = self._data_dir / ".encoder.joblib"
+        if encoder_path.exists():
+            return joblib.load(encoder_path)
+        encoder = LabelEncoder()
+        encoder.fit(labels)
+        joblib.dump(encoder, encoder_path)
+        return encoder
