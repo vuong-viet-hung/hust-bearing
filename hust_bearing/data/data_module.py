@@ -87,6 +87,6 @@ def _from_bearing_data(
 
     paths = np.array(list(data_dir.glob("*.mat")))
     labels = path_parser.extract_labels(paths)
-    targets = label_encoder.encode_labels(labels)
+    targets = label_encoder.encode(labels)
     loads = path_parser.extract_loads(paths)
     return paths, targets, loads
