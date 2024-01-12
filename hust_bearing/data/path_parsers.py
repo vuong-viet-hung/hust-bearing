@@ -8,11 +8,11 @@ import numpy.typing as npt
 
 class PathParser(ABC):
     @abstractmethod
-    def extract_labels(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
+    def labels_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
         pass
 
     @abstractmethod
-    def extract_loads(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
+    def loads_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
         pass
 
 
@@ -28,10 +28,10 @@ class CWRUPathParser(PathParser):
         re.VERBOSE,
     )
 
-    def extract_labels(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
+    def labels_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
         return np.vectorize(self._extract_label)(paths)
 
-    def extract_loads(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
+    def loads_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
         return np.vectorize(self._extract_load)(paths)
 
     def _extract_label(self, path: Path) -> str:
@@ -58,10 +58,10 @@ class HUSTPathParser(PathParser):
         re.VERBOSE,
     )
 
-    def extract_labels(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
+    def labels_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
         return np.vectorize(self._extract_label)(paths)
 
-    def extract_loads(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
+    def loads_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
         return np.vectorize(self._extract_load)(paths)
 
     def _extract_label(self, path: Path) -> str:
