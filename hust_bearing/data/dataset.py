@@ -18,7 +18,7 @@ class ImageClassificationDS(Dataset):
         transform: Callable[[npt.NDArray], torch.Tensor],
     ) -> None:
         self._paths = paths
-        self._labels = torch.from_numpy(targets)
+        self._targets = torch.from_numpy(targets)
         self._load_image = load_image
         self._transform = transform
 
@@ -28,7 +28,7 @@ class ImageClassificationDS(Dataset):
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
         spectrogram = self._load_image(self._paths[idx])  # type: ignore
         image = self._transform(spectrogram)
-        return image, self._labels[idx]
+        return image, self._targets[idx]
 
 
 def bearing_dataset(
