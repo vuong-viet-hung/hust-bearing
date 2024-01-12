@@ -10,13 +10,13 @@ from torch.utils.data import DataLoader
 
 from hust_bearing.data.dataset import ImageClassificationDS as Dataset
 from hust_bearing.data.dataset import bearing_dataset
-from hust_bearing.data.encoders import (
-    Encoder,
+from hust_bearing.data.label_encoders import (
+    LabelEncoder,
     CWRUEncoder,
     HUSTEncoder,
 )
-from hust_bearing.data.parsers import (
-    Parser,
+from hust_bearing.data.path_parsers import (
+    PathParser,
     CWRUParser,
     HUSTParser,
 )
@@ -25,7 +25,9 @@ from hust_bearing.data.parsers import (
 DataName = Literal["cwru", "hust"]
 
 
-BEARING_DATA_CLASSES: dict[DataName, tuple[type[Encoder], type[Parser]]] = {
+BEARING_DATA_CLASSES: dict[
+    DataName, tuple[type[LabelEncoder], type[PathParser]]
+] = {
     "cwru": (CWRUEncoder, CWRUParser),
     "hust": (HUSTEncoder, HUSTParser),
 }

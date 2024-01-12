@@ -4,7 +4,7 @@ import numpy as np
 import numpy.typing as npt
 
 
-class Encoder(ABC):
+class LabelEncoder(ABC):
     @abstractmethod
     def encode_labels(self, labels: npt.NDArray[np.str_]) -> npt.NDArray[np.int64]:
         pass
@@ -14,7 +14,7 @@ class Encoder(ABC):
         pass
 
 
-class CWRUEncoder(Encoder):
+class CWRUEncoder(LabelEncoder):
     _classes = np.array(["Normal", "B", "IR", "OR"])
 
     def encode_labels(self, labels: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
@@ -24,7 +24,7 @@ class CWRUEncoder(Encoder):
         return self._classes[targets]
 
 
-class HUSTEncoder(Encoder):
+class HUSTEncoder(LabelEncoder):
     _classes = np.array(["N", "B", "I", "O", "IB", "IO", "OB"])
 
     def encode_labels(self, labels: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:

@@ -6,7 +6,7 @@ import numpy as np
 import numpy.typing as npt
 
 
-class Parser(ABC):
+class PathParser(ABC):
     @abstractmethod
     def extract_labels(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
         pass
@@ -16,7 +16,7 @@ class Parser(ABC):
         pass
 
 
-class CWRUParser(Parser):
+class CWRUParser(PathParser):
     _dir_name_regex = re.compile(
         r"""
         ([a-zA-Z]+)  # Fault
@@ -47,7 +47,7 @@ class CWRUParser(Parser):
         return match
 
 
-class HUSTParser(Parser):
+class HUSTParser(PathParser):
     _dir_name_regex = re.compile(
         r"""
         ([A-Z]+)  # Fault
