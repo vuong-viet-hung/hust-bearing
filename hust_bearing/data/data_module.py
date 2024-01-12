@@ -12,13 +12,13 @@ from hust_bearing.data.dataset import ImageClassificationDS as Dataset
 from hust_bearing.data.dataset import bearing_dataset
 from hust_bearing.data.label_encoders import (
     LabelEncoder,
-    CWRUEncoder,
-    HUSTEncoder,
+    CWRULabelEncoder,
+    HUSTLabelEncoder,
 )
 from hust_bearing.data.path_parsers import (
     PathParser,
-    CWRUParser,
-    HUSTParser,
+    CWRUPathParser,
+    HUSTPathParser,
 )
 
 
@@ -26,8 +26,8 @@ DataName = Literal["cwru", "hust"]
 
 
 BEARING_DATA_CLASSES: dict[DataName, tuple[type[LabelEncoder], type[PathParser]]] = {
-    "cwru": (CWRUEncoder, CWRUParser),
-    "hust": (HUSTEncoder, HUSTParser),
+    "cwru": (CWRULabelEncoder, CWRUPathParser),
+    "hust": (HUSTLabelEncoder, HUSTPathParser),
 }
 
 
@@ -60,20 +60,20 @@ class ImageClassificationDM(pl.LightningDataModule):
 def bearing_data_module(
     name: DataName, data_dir: Path, batch_size: int, train_load: int
 ) -> ImageClassificationDM:
-    paths, labels, loads = _from_bearing_data(name, data_dir)
+    paths, targets, loads = _from_bearing_data(name, data_dir)
 
     fit_paths = paths[loads == train_load]
     test_paths = paths[loads != train_load]
-    fit_labels = labels[loads == train_load]
-    test_labels = labels[loads != train_load]
+    fit_targets = targets[loads == train_load]
+    test_targets = targets[loads != train_load]
 
-    train_paths, val_paths, train_labels, val_labels = train_test_split(
-        fit_paths, fit_labels, test_size=0.2, stratify=fit_labels
+    train_paths, val_paths, train_targets, val_targets = train_test_split(
+        fit_paths, fit_targets, test_size=0.2, stratify=fit_targets
     )
     return ImageClassificationDM(
-        bearing_dataset(train_paths, train_labels),
-        bearing_dataset(test_paths, test_labels),
-        bearing_dataset(val_paths, val_labels),
+        bearing_dataset(train_paths, train_targets),
+        bearing_dataset(test_paths, test_targets),
+        bearing_dataset(val_paths, val_targets),
         batch_size,
     )
 
@@ -81,11 +81,12 @@ def bearing_data_module(
 def _from_bearing_data(
     name: DataName, data_dir: Path
 ) -> tuple[npt.NDArray[np.object_], npt.NDArray[np.int64], npt.NDArray[np.int64]]:
-    encoder_cls, parser_cls = BEARING_DATA_CLASSES[name]
-    encoder = encoder_cls()
-    parser = parser_cls()
+    label_encoder_cls, path_parser_cls = BEARING_DATA_CLASSES[name]
+    label_encoder = label_encoder_cls()
+    path_parser = path_parser_cls()
 
     paths = np.array(list(data_dir.glob("*.mat")))
-    labels = encoder.encode_labels(parser.extract_labels(paths))
-    loads = parser.extract_loads(paths)
-    return paths, labels, loads
+    labels = path_parser.extract_labels(paths)
+    targets = label_encoder.encode_labels(labels)
+    loads = path_parser.extract_loads(paths)
+    return paths, targets, loads

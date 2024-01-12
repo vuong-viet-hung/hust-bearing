@@ -13,12 +13,12 @@ class ImageClassificationDS(Dataset):
     def __init__(
         self,
         paths: npt.NDArray[np.object_],
-        labels: npt.NDArray[np.int64],
+        targets: npt.NDArray[np.int64],
         load_image: Callable[[Path], npt.NDArray[np.float32]],
         transform: Callable[[npt.NDArray], torch.Tensor],
     ) -> None:
         self._paths = paths
-        self._labels = torch.from_numpy(labels)
+        self._labels = torch.from_numpy(targets)
         self._read_image = load_image
         self._transform = transform
 
@@ -32,10 +32,10 @@ class ImageClassificationDS(Dataset):
 
 
 def bearing_dataset(
-    paths: npt.NDArray[np.object_], labels: npt.NDArray[np.int64]
+    paths: npt.NDArray[np.object_], targets: npt.NDArray[np.int64]
 ) -> ImageClassificationDS:
     return ImageClassificationDS(
-        paths, labels, _load_spectrogram, _build_default_transform((64, 64))
+        paths, targets, _load_spectrogram, _build_default_transform((64, 64))
     )
 
 

@@ -14,7 +14,7 @@ class LabelEncoder(ABC):
         pass
 
 
-class CWRUEncoder(LabelEncoder):
+class CWRULabelEncoder(LabelEncoder):
     _classes = np.array(["Normal", "B", "IR", "OR"])
 
     def encode_labels(self, labels: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
@@ -24,7 +24,7 @@ class CWRUEncoder(LabelEncoder):
         return self._classes[targets]
 
 
-class HUSTEncoder(LabelEncoder):
+class HUSTLabelEncoder(LabelEncoder):
     _classes = np.array(["N", "B", "I", "O", "IB", "IO", "OB"])
 
     def encode_labels(self, labels: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:

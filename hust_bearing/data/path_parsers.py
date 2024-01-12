@@ -16,7 +16,7 @@ class PathParser(ABC):
         pass
 
 
-class CWRUParser(PathParser):
+class CWRUPathParser(PathParser):
     _dir_name_regex = re.compile(
         r"""
         ([a-zA-Z]+)  # Fault
@@ -47,7 +47,7 @@ class CWRUParser(PathParser):
         return match
 
 
-class HUSTParser(PathParser):
+class HUSTPathParser(PathParser):
     _dir_name_regex = re.compile(
         r"""
         ([A-Z]+)  # Fault
