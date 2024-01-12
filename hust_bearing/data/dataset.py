@@ -19,14 +19,14 @@ class ImageClassificationDS(Dataset):
     ) -> None:
         self._paths = paths
         self._labels = torch.from_numpy(targets)
-        self._read_image = load_image
+        self._load_image = load_image
         self._transform = transform
 
     def __len__(self) -> int:
         return len(self._paths)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
-        spectrogram = self._read_image(self._paths[idx])  # type: ignore
+        spectrogram = self._load_image(self._paths[idx])  # type: ignore
         image = self._transform(spectrogram)
         return image, self._labels[idx]
 
