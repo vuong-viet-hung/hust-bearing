@@ -25,9 +25,7 @@ from hust_bearing.data.path_parsers import (
 DataName = Literal["cwru", "hust"]
 
 
-BEARING_DATA_CLASSES: dict[
-    DataName, tuple[type[LabelEncoder], type[PathParser]]
-] = {
+BEARING_DATA_CLASSES: dict[DataName, tuple[type[LabelEncoder], type[PathParser]]] = {
     "cwru": (CWRUEncoder, CWRUParser),
     "hust": (HUSTEncoder, HUSTParser),
 }
