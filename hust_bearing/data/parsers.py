@@ -8,18 +8,12 @@ import numpy.typing as npt
 
 class Parser(ABC):
     @abstractmethod
-    def extract_label(self, path: Path) -> str:
+    def extract_labels(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
         pass
 
     @abstractmethod
-    def extract_load(self, path: Path) -> int:
-        pass
-
-    def extract_labels(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
-        return np.vectorize(self.extract_label)(paths)
-
     def extract_loads(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
-        return np.vectorize(self.extract_label)(paths)
+        pass
 
 
 class CWRUParser(Parser):
@@ -34,10 +28,16 @@ class CWRUParser(Parser):
         re.VERBOSE,
     )
 
-    def extract_label(self, path: Path) -> str:
+    def extract_labels(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
+        return np.vectorize(self._extract_label)(paths)
+
+    def extract_loads(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
+        return np.vectorize(self._extract_load)(paths)
+
+    def _extract_label(self, path: Path) -> str:
         return self._parse(path.parent.name).group(1)
 
-    def extract_load(self, path: Path) -> int:
+    def _extract_load(self, path: Path) -> int:
         return int(self._parse(path.parent.name).group(4))
 
     def _parse(self, dir_name: str) -> re.Match[str]:
@@ -58,10 +58,16 @@ class HUSTParser(Parser):
         re.VERBOSE,
     )
 
-    def extract_label(self, path: Path) -> str:
+    def extract_labels(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
+        return np.vectorize(self._extract_label)(paths)
+
+    def extract_loads(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
+        return np.vectorize(self._extract_load)(paths)
+
+    def _extract_label(self, path: Path) -> str:
         return self._parse(path.parent.name).group(1)
 
-    def extract_load(self, path: Path) -> int:
+    def _extract_load(self, path: Path) -> int:
         return int(self._parse(path.parent.name).group(3))
 
     def _parse(self, dir_name: str) -> re.Match[str]:

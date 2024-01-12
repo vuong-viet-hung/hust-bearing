@@ -6,35 +6,29 @@ import numpy.typing as npt
 
 class Encoder(ABC):
     @abstractmethod
-    def encode_label(self, label: str) -> int:
+    def encode_labels(self, labels: npt.NDArray[np.str_]) -> npt.NDArray[np.int64]:
         pass
 
     @abstractmethod
-    def decode_label(self, label: int) -> str:
+    def decode_targets(self, targets: npt.NDArray[np.str_]) -> npt.NDArray[np.int64]:
         pass
-
-    def encode_labels(self, labels: npt.NDArray[np.str_]) -> npt.NDArray[np.int64]:
-        return np.vectorize(self.encode_label)(labels)
-
-    def decode_labels(self, labels: npt.NDArray[np.str_]) -> npt.NDArray[np.int64]:
-        return np.vectorize(self.encode_label)(labels)
 
 
 class CWRUEncoder(Encoder):
-    _classes = ["Normal", "B", "IR", "OR"]
+    _classes = np.array(["Normal", "B", "IR", "OR"])
 
-    def encode_label(self, label: str) -> int:
-        return self._classes.index(label)
+    def encode_labels(self, labels: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
+        return np.argmax(np.expand_dims(self._classes, axis=1) == labels, axis=0)
 
-    def decode_label(self, label: int) -> str:
-        return self._classes[label]
+    def decode_targets(self, targets: npt.NDArray[np.int64]) -> npt.NDArray[np.str_]:
+        return self._classes[targets]
 
 
 class HUSTEncoder(Encoder):
-    _classes = ["N", "B", "I", "O", "IB", "IO", "OB"]
+    _classes = np.array(["N", "B", "I", "O", "IB", "IO", "OB"])
 
-    def encode_label(self, label: str) -> int:
-        return self._classes.index(label)
+    def encode_labels(self, labels: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
+        return np.argmax(np.expand_dims(self._classes, axis=1) == labels, axis=0)
 
-    def decode_label(self, label: int) -> str:
-        return self._classes[label]
+    def decode_targets(self, targets: npt.NDArray[np.int64]) -> npt.NDArray[np.str_]:
+        return self._classes[targets]
