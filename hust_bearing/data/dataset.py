@@ -9,42 +9,30 @@ import torchvision
 from torch.utils.data import Dataset
 
 
-class ImageClassificationDS(Dataset):
+class BearingDataset(Dataset):
     def __init__(
         self,
         paths: npt.NDArray[np.object_],
         targets: npt.NDArray[np.int64],
-        load_image: Callable[[Path], npt.NDArray[np.float32]],
-        transform: Callable[[npt.NDArray], torch.Tensor],
     ) -> None:
         self._paths = paths
         self._targets = torch.from_numpy(targets)
-        self._load_image = load_image
-        self._transform = transform
+        self._transform = _build_transform((64, 64))
 
     def __len__(self) -> int:
         return len(self._paths)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
-        spectrogram = self._load_image(self._paths[idx])  # type: ignore
+        spectrogram = _load_spectrogram(self._paths[idx])  # type: ignore
         image = self._transform(spectrogram)
         return image, self._targets[idx]
 
 
-def bearing_dataset(
-    paths: npt.NDArray[np.object_], targets: npt.NDArray[np.int64]
-) -> ImageClassificationDS:
-    return ImageClassificationDS(
-        paths, targets, _load_spectrogram, _build_default_transform((64, 64))
-    )
-
-
 def _load_spectrogram(path: Path) -> npt.NDArray[np.float32]:
-    data = scipy.io.loadmat(str(path))
-    return data["spec"].astype(np.float32)
+    return scipy.io.loadmat(str(path))["data"].astype(np.float32)
 
 
-def _build_default_transform(
+def _build_transform(
     image_size: tuple[int, int]
 ) -> Callable[[npt.NDArray[np.float32]], torch.Tensor]:
     return torchvision.transforms.Compose(
