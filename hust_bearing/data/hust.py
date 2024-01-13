@@ -1,9 +1,6 @@
 import re
 from pathlib import Path
 
-import numpy as np
-import numpy.typing as npt
-
 from hust_bearing.data import BearingDataModule
 
 
@@ -17,19 +14,12 @@ class HUST(BearingDataModule):
         """,
         re.VERBOSE,
     )
-    _classes = np.array(["N", "B", "I", "O", "IB", "IO", "OB"])
+    _classes = ["N", "B", "I", "O", "IB", "IO", "OB"]
 
-    def targets_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
-        labels = np.vectorize(self._extract_label)(paths)
-        return np.argmax(np.expand_dims(self._classes, axis=1) == labels, axis=0)
+    def target_from(self, path: Path) -> int:
+        return self._classes.index(self._parse(path.parent.name).group(1))
 
-    def loads_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
-        return np.vectorize(self._extract_load)(paths)
-
-    def _extract_label(self, path: Path) -> str:
-        return self._parse(path.parent.name).group(1)
-
-    def _extract_load(self, path: Path) -> int:
+    def load_from(self, path: Path) -> int:
         return int(self._parse(path.parent.name).group(3))
 
     def _parse(self, dir_name: str) -> re.Match[str]:

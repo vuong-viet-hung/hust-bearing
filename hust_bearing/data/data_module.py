@@ -5,7 +5,7 @@ from pathlib import Path
 import lightning as pl
 import numpy as np
 import numpy.typing as npt
-from lightning.pytorch.utilities.types import TRAIN_DATALOADERS, EVAL_DATALOADERS
+from lightning.pytorch.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
@@ -29,8 +29,8 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
 
     def setup(self, stage: str) -> None:
         paths = np.array(list(self._data_dir.glob("*.mat")))
-        targets = self.targets_from(paths)
-        loads = self.loads_from(paths)
+        targets = self._targets_from(paths)
+        loads = self._loads_from(paths)
 
         fit_paths = paths[loads == self._train_load]
         test_paths = paths[loads != self._train_load]
@@ -75,9 +75,15 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
         return self.test_dataloader()
 
     @abstractmethod
-    def targets_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
+    def target_from(self, path: Path) -> int:
         pass
 
     @abstractmethod
-    def loads_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
+    def load_from(self, path: Path) -> int:
         pass
+
+    def _targets_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
+        return np.vectorize(self.target_from)(paths)
+
+    def _loads_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
+        return np.vectorize(self.load_from)(paths)
