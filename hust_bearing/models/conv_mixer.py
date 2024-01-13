@@ -1,7 +1,6 @@
-# pylint: disable=not-callable
+# pylint: disable=not-callable, too-many-ancestors
 from typing import Any
 
-import torch
 from mlp_mixer_pytorch import MLPMixer
 from torch import nn
 from torch.nn.functional import gelu

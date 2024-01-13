@@ -13,19 +13,19 @@ from hust_bearing.data.dataset import BearingDataset
 
 
 class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
-    def __init__(
-        self, data_dir: Path, batch_size: int, train_load: int, val_size: float
-    ) -> None:
+    def __init__(self, data_dir: Path, batch_size: int, train_load: int) -> None:
         super().__init__()
         self._data_dir = data_dir
         self._batch_size = batch_size
         self._train_load = train_load
-        self._val_size = val_size
-        self._num_workers = multiprocessing.cpu_count()
 
-        self._train_ds: BearingDataset | None = None
-        self._test_ds: BearingDataset | None = None
-        self._val_ds: BearingDataset | None = None
+        self._num_workers = multiprocessing.cpu_count()
+        empty_ds = BearingDataset(
+            np.empty((0,), dtype=np.object_), np.empty((0,), dtype=np.int64)
+        )
+        self._train_ds = empty_ds
+        self._test_ds = empty_ds
+        self._val_ds = empty_ds
 
     def setup(self, stage: str) -> None:
         paths = np.array(list(self._data_dir.glob("*.mat")))
@@ -37,23 +37,17 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
         fit_targets = targets[loads == self._train_load]
         test_targets = targets[loads != self._train_load]
 
-        train_paths, val_paths, train_targets, val_targets = train_test_split(
-            fit_paths, fit_targets, test_size=0.2, stratify=fit_targets
-        )
-
-        if stage == "fit":
+        if stage in ("fit", "validate"):
+            train_paths, val_paths, train_targets, val_targets = train_test_split(
+                fit_paths, fit_targets, test_size=0.2, stratify=fit_targets
+            )
             self._train_ds = BearingDataset(train_paths, train_targets)
-            self._val_ds = BearingDataset(val_paths, val_targets)
-
-        if stage == "validate":
             self._val_ds = BearingDataset(val_paths, val_targets)
 
         if stage in ("test", "predict"):
             self._test_ds = BearingDataset(test_paths, test_targets)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
-        if self._train_ds is None:
-            raise AttributeError
         return DataLoader(
             self._train_ds,
             self._batch_size,
@@ -62,8 +56,6 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
         )
 
     def test_dataloader(self) -> EVAL_DATALOADERS:
-        if self._test_ds is None:
-            raise AttributeError
         return DataLoader(
             self._test_ds,
             self._batch_size,
@@ -72,8 +64,6 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
         )
 
     def val_dataloader(self) -> EVAL_DATALOADERS:
-        if self._val_ds is None:
-            raise AttributeError
         return DataLoader(
             self._val_ds,
             self._batch_size,

@@ -19,17 +19,9 @@ class HUST(BearingDataModule):
     )
     _classes = np.array(["N", "B", "I", "O", "IB", "IO", "OB"])
 
-    def __init__(
-        self, data_dir: Path, batch_size: int, train_load: int, val_size: float
-    ) -> None:
-        super().__init__(data_dir, batch_size, train_load, val_size)
-
     def targets_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
-        labels = self.labels_from(paths)
+        labels = np.vectorize(self._extract_label)(paths)
         return np.argmax(np.expand_dims(self._classes, axis=1) == labels, axis=0)
-
-    def labels_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.str_]:
-        return np.vectorize(self._extract_label)(paths)
 
     def loads_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
         return np.vectorize(self._extract_load)(paths)

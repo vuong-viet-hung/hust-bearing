@@ -1,7 +1,7 @@
 from lightning.pytorch.cli import LightningCLI
 
-from hust_bearing.models import Classifier, ConvMixer
-from hust_bearing.data import BearingDataModule, HUST, CWRU
+from hust_bearing.models import Classifier
+from hust_bearing.data import BearingDataModule
 
 
 def cli_main():

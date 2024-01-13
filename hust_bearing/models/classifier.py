@@ -31,7 +31,7 @@ class Classifier(pl.LightningModule, metaclass=ABCMeta):
         loss = self.loss(outputs, targets)
         self.val_acc(outputs, targets)
         self.log_dict({"val_loss": loss, "val_acc": self.val_acc}, prog_bar=True)
-        return None
+        return loss
 
     def test_step(self, *args: Any, **kwargs: Any) -> STEP_OUTPUT:
         batch, *_ = args
@@ -40,7 +40,7 @@ class Classifier(pl.LightningModule, metaclass=ABCMeta):
         loss = self.loss(outputs, targets)
         self.test_acc(outputs, targets)
         self.log_dict({"test_loss": loss, "test_acc": self.test_acc}, prog_bar=True)
-        return None
+        return loss
 
     def predict_step(self, *args: Any, **kwargs: Any) -> Any:
         batch, *_ = args
