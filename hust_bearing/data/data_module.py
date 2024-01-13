@@ -5,7 +5,6 @@ from pathlib import Path
 import lightning as pl
 import numpy as np
 import numpy.typing as npt
-from lightning.pytorch.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
@@ -47,7 +46,7 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
         if stage in ("test", "predict"):
             self._test_ds = BearingDataset(test_paths, test_targets)
 
-    def train_dataloader(self) -> TRAIN_DATALOADERS:
+    def train_dataloader(self) -> DataLoader:
         return DataLoader(
             self._train_ds,
             self._batch_size,
@@ -55,7 +54,7 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
             shuffle=True,
         )
 
-    def test_dataloader(self) -> EVAL_DATALOADERS:
+    def test_dataloader(self) -> DataLoader:
         return DataLoader(
             self._test_ds,
             self._batch_size,
@@ -63,7 +62,7 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
             shuffle=False,
         )
 
-    def val_dataloader(self) -> EVAL_DATALOADERS:
+    def val_dataloader(self) -> DataLoader:
         return DataLoader(
             self._val_ds,
             self._batch_size,
@@ -71,7 +70,7 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
             shuffle=False,
         )
 
-    def predict_dataloader(self) -> EVAL_DATALOADERS:
+    def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
 
     @abstractmethod

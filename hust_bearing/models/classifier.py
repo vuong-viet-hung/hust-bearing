@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Any
 
 import lightning as pl
-from lightning.pytorch.utilities.types import STEP_OUTPUT
+import torch
 from torch import nn
 from torchmetrics.classification import MulticlassAccuracy
 
@@ -15,7 +15,7 @@ class Classifier(pl.LightningModule, metaclass=ABCMeta):
         self.test_acc = MulticlassAccuracy(num_classes)
         self.val_acc = MulticlassAccuracy(num_classes)
 
-    def training_step(self, *args: Any, **kwargs: Any) -> STEP_OUTPUT:
+    def training_step(self, *args: Any, **kwargs: Any) -> torch.Tensor:
         batch, *_ = args
         inputs, targets = batch
         outputs = self(inputs)
@@ -24,25 +24,23 @@ class Classifier(pl.LightningModule, metaclass=ABCMeta):
         self.log_dict({"train_loss": loss, "train_acc": self.train_acc}, prog_bar=True)
         return loss
 
-    def validation_step(self, *args: Any, **kwargs: Any) -> STEP_OUTPUT:
+    def validation_step(self, *args: Any, **kwargs: Any) -> None:
         batch, *_ = args
         inputs, targets = batch
         outputs = self(inputs)
         loss = self.loss(outputs, targets)
         self.val_acc(outputs, targets)
         self.log_dict({"val_loss": loss, "val_acc": self.val_acc}, prog_bar=True)
-        return loss
 
-    def test_step(self, *args: Any, **kwargs: Any) -> STEP_OUTPUT:
+    def test_step(self, *args: Any, **kwargs: Any) -> None:
         batch, *_ = args
         inputs, targets = batch
         outputs = self(inputs)
         loss = self.loss(outputs, targets)
         self.test_acc(outputs, targets)
         self.log_dict({"test_loss": loss, "test_acc": self.test_acc}, prog_bar=True)
-        return loss
 
-    def predict_step(self, *args: Any, **kwargs: Any) -> Any:
+    def predict_step(self, *args: Any, **kwargs: Any) -> torch.Tensor:
         batch, *_ = args
         inputs, _ = batch
         return self(inputs).argmax(dim=1)
