@@ -16,8 +16,7 @@ class Classifier(pl.LightningModule, metaclass=ABCMeta):
         self.val_acc = MulticlassAccuracy(num_classes)
 
     def training_step(self, *args: Any, **kwargs: Any) -> torch.Tensor:
-        batch, *_ = args
-        inputs, targets = batch
+        (inputs, targets), *_ = args
         outputs = self(inputs)
         loss = self.loss(outputs, targets)
         self.train_acc(outputs, targets)
@@ -25,24 +24,21 @@ class Classifier(pl.LightningModule, metaclass=ABCMeta):
         return loss
 
     def validation_step(self, *args: Any, **kwargs: Any) -> None:
-        batch, *_ = args
-        inputs, targets = batch
+        (inputs, targets), *_ = args
         outputs = self(inputs)
         loss = self.loss(outputs, targets)
         self.val_acc(outputs, targets)
         self.log_dict({"val_loss": loss, "val_acc": self.val_acc}, prog_bar=True)
 
     def test_step(self, *args: Any, **kwargs: Any) -> None:
-        batch, *_ = args
-        inputs, targets = batch
+        (inputs, targets), *_ = args
         outputs = self(inputs)
         loss = self.loss(outputs, targets)
         self.test_acc(outputs, targets)
         self.log_dict({"test_loss": loss, "test_acc": self.test_acc}, prog_bar=True)
 
     def predict_step(self, *args: Any, **kwargs: Any) -> torch.Tensor:
-        batch, *_ = args
-        inputs, _ = batch
+        (inputs, _), *_ = args
         return self(inputs).argmax(dim=1)
 
     @abstractmethod

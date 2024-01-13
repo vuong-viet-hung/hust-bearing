@@ -1,6 +1,7 @@
 # pylint: disable=not-callable, too-many-ancestors
 from typing import Any
 
+import torch
 from mlp_mixer_pytorch import MLPMixer
 from torch import nn
 from torch.nn.functional import gelu
@@ -23,7 +24,7 @@ class ConvMixer(Classifier):
             num_classes=num_classes,
         )
 
-    def forward(self, *args: Any, **kwargs: Any) -> Any:
+    def forward(self, *args: Any, **kwargs: Any) -> torch.Tensor:
         inputs, *_ = args
         conv = self.batch_norm(gelu(self.conv(inputs)))
         pool = self.pool(conv)
