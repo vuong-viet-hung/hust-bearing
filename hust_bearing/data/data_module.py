@@ -78,12 +78,12 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
     def target_from(self, path: Path) -> int:
         pass
 
+    def _targets_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
+        return np.vectorize(self.target_from)(paths)
+
     @abstractmethod
     def load_from(self, path: Path) -> int:
         pass
-
-    def _targets_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
-        return np.vectorize(self.target_from)(paths)
 
     def _loads_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
         return np.vectorize(self.load_from)(paths)
