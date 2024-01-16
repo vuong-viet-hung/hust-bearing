@@ -1,15 +1,11 @@
-# pylint: disable=not-callable, too-many-ancestors
-from typing import Any
-
+# pylint: disable=not-callable
 import torch
 from mlp_mixer_pytorch import MLPMixer
 from torch import nn
 from torch.nn.functional import gelu
 
-from hust_bearing.models import Classifier
 
-
-class ConvMixer(Classifier):
+class ConvMixer(nn.Module):
     def __init__(self, num_classes: int) -> None:
         super().__init__(num_classes)
         self.conv = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=3, padding=1)
@@ -24,8 +20,7 @@ class ConvMixer(Classifier):
             num_classes=num_classes,
         )
 
-    def forward(self, *args: Any, **kwargs: Any) -> torch.Tensor:
-        inputs, *_ = args
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         conv = self.batch_norm(gelu(self.conv(inputs)))
         pool = self.pool(conv)
         return self.mixer(pool)
