@@ -24,7 +24,7 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
     def setup(self, stage: str) -> None:
         paths = [
             path
-            for path in self._data_dir.rglob("*.mat")
+            for path in self._data_dir.glob("**/*.mat")
             if self.load_from(path.parent.name)
         ]
         targets = [self.target_from(path.parent.name) for path in paths]
