@@ -1,9 +1,7 @@
 .idea/
 .venv/
 __pycache__/
-logs/
 *.ckpt
 *.ipynb
-*.joblib
 *.mat
-*.tar.gz
+*.tfevents.*
