@@ -10,13 +10,9 @@ from torch.utils.data import Dataset
 
 
 class BearingDataset(Dataset):
-    def __init__(
-        self,
-        paths: npt.NDArray[np.object_],
-        targets: npt.NDArray[np.int64],
-    ) -> None:
+    def __init__(self, paths: list[Path], targets: list[int]) -> None:
         self._paths = paths
-        self._targets = torch.from_numpy(targets)
+        self._targets = torch.tensor(targets)
         self._transform = _build_transform((64, 64))
 
     def __len__(self) -> int:
@@ -38,6 +34,6 @@ def _build_transform(
     return torchvision.transforms.Compose(
         [
             torchvision.transforms.ToTensor(),
-            torchvision.transforms.Resize(image_size),
+            torchvision.transforms.Resize(image_size, antialias=True),
         ]
     )
