@@ -19,7 +19,7 @@ class BearingDataset(Dataset):
         return len(self._paths)
 
     def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
-        spectrogram = _load_spectrogram(self._paths[idx])  # type: ignore
+        spectrogram = _load_spectrogram(self._paths[idx])
         image = self._transform(spectrogram)
         return image, self._targets[idx]
 
