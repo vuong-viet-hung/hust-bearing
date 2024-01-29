@@ -1,3 +1,2 @@
-from hust_bearing.data.dataset import BearingDataset
 from hust_bearing.data.module import BearingDataModule
 from hust_bearing.data.hust import HUST
