@@ -1,3 +1,4 @@
+# pylint: disable=unused-import
 from lightning.pytorch.cli import LightningCLI
 
 from hust_bearing.models import ConvMixer

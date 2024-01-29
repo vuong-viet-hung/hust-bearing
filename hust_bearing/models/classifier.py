@@ -1,3 +1,4 @@
+# pylint: disable=too-many-ancestors
 from abc import ABCMeta
 from typing import Any
 
