@@ -1,10 +1,9 @@
+import itertools
 import multiprocessing
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
 
 import lightning as pl
-import numpy as np
-import numpy.typing as npt
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
@@ -12,39 +11,34 @@ from hust_bearing.data.dataset import BearingDataset
 
 
 class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
-    def __init__(self, data_dir: Path, batch_size: int, train_load: int) -> None:
+    def __init__(self, data_dir: Path, batch_size: int, load: int) -> None:
         super().__init__()
         self._data_dir = data_dir
         self._batch_size = batch_size
-        self._train_load = train_load
+        self._load = load
 
         self._num_workers = multiprocessing.cpu_count()
-        empty_ds = BearingDataset(
-            np.empty((0,), dtype=np.object_), np.empty((0,), dtype=np.int64)
-        )
-        self._train_ds = empty_ds
-        self._test_ds = empty_ds
-        self._val_ds = empty_ds
+        self._train_ds = BearingDataset([], [])
+        self._test_ds = BearingDataset([], [])
+        self._val_ds = BearingDataset([], [])
 
     def setup(self, stage: str) -> None:
-        paths = np.array(list(self._data_dir.glob("*.mat")))
-        targets = self._targets_from(paths)
-        loads = self._loads_from(paths)
-
-        fit_paths = paths[loads == self._train_load]
-        test_paths = paths[loads != self._train_load]
-        fit_targets = targets[loads == self._train_load]
-        test_targets = targets[loads != self._train_load]
+        paths = [
+            path
+            for path in self._data_dir.rglob("*.mat")
+            if self.load_from(path.parent.name)
+        ]
+        targets = [self.target_from(path.parent.name) for path in paths]
 
         if stage in {"fit", "validate"}:
             train_paths, val_paths, train_targets, val_targets = train_test_split(
-                fit_paths, fit_targets, test_size=0.2, stratify=fit_targets
+                paths, targets, test_size=0.2, stratify=targets
             )
             self._train_ds = BearingDataset(train_paths, train_targets)
             self._val_ds = BearingDataset(val_paths, val_targets)
 
         if stage in {"test", "predict"}:
-            self._test_ds = BearingDataset(test_paths, test_targets)
+            self._test_ds = BearingDataset(paths, targets)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -74,15 +68,18 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
         return self.test_dataloader()
 
     @abstractmethod
-    def target_from(self, path: Path) -> int:
+    def target_from(self, dir_name: str) -> int:
         pass
-
-    def _targets_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
-        return np.vectorize(self.target_from)(paths)
 
     @abstractmethod
-    def load_from(self, path: Path) -> int:
+    def load_from(self, dir_name: str) -> int:
         pass
 
-    def _loads_from(self, paths: npt.NDArray[np.object_]) -> npt.NDArray[np.int64]:
-        return np.vectorize(self.load_from)(paths)
+    def _from(self, subdirs: list[Path]) -> tuple[list[Path], list[int]]:
+        paths = list(
+            itertools.chain.from_iterable(
+                subdir.iterdir() for subdir in subdirs if subdir.is_dir()
+            )
+        )
+        targets = [self.target_from(path.parent.name) for path in paths]
+        return paths, targets
