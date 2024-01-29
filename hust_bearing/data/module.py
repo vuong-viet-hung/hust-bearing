@@ -16,9 +16,10 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
         self._batch_size = batch_size
         self._load = load
         self._num_workers = multiprocessing.cpu_count()
-        self._train_ds = BearingDataset([], [])
-        self._test_ds = BearingDataset([], [])
-        self._val_ds = BearingDataset([], [])
+        empty_ds = BearingDataset([], [])
+        self._train_ds = empty_ds
+        self._test_ds = empty_ds
+        self._val_ds = empty_ds
 
     def setup(self, stage: str) -> None:
         paths = [
@@ -35,7 +36,7 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
             self._train_ds = BearingDataset(train_paths, train_targets)
             self._val_ds = BearingDataset(val_paths, val_targets)
 
-        if stage in {"test", "predict"}:
+        elif stage in {"test", "predict"}:
             self._test_ds = BearingDataset(paths, targets)
 
     def train_dataloader(self) -> DataLoader:
