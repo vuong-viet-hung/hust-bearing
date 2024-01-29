@@ -28,6 +28,22 @@ class BearingDataset(Dataset):
         return image, self._targets[idx]
 
 
+class DSANDataset(Dataset):
+    def __init__(self, source_ds: BearingDataset, target_ds: BearingDataset) -> None:
+        self._source_ds = source_ds
+        self._target_ds = target_ds
+
+    def __len__(self) -> int:
+        return max(len(self._source_ds), len(self._target_ds))
+
+    def __getitem__(
+        self, idx: int
+    ) -> tuple[tuple[torch.Tensor, torch.Tensor], tuple[torch.Tensor, torch.Tensor]]:
+        source_idx = idx % len(self._source_ds)
+        target_idx = idx % len(self._target_ds)
+        return self._source_ds[source_idx], self._target_ds[target_idx]
+
+
 def _load_spectrogram(path: Path) -> npt.NDArray[np.float32]:
     return scipy.io.loadmat(str(path))["data"].astype(np.float32)
 
