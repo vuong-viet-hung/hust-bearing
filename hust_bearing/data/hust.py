@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from hust_bearing.data.data_module import BearingDataModule
+from hust_bearing.data.module import BearingDataModule
 
 
 class HUST(BearingDataModule):
