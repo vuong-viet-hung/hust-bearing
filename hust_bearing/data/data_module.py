@@ -36,14 +36,14 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
         fit_targets = targets[loads == self._train_load]
         test_targets = targets[loads != self._train_load]
 
-        if stage in ("fit", "validate"):
+        if stage in {"fit", "validate"}:
             train_paths, val_paths, train_targets, val_targets = train_test_split(
                 fit_paths, fit_targets, test_size=0.2, stratify=fit_targets
             )
             self._train_ds = BearingDataset(train_paths, train_targets)
             self._val_ds = BearingDataset(val_paths, val_targets)
 
-        if stage in ("test", "predict"):
+        if stage in {"test", "predict"}:
             self._test_ds = BearingDataset(test_paths, test_targets)
 
     def train_dataloader(self) -> DataLoader:
