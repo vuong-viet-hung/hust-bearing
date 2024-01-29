@@ -16,7 +16,6 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
         self._data_dir = data_dir
         self._batch_size = batch_size
         self._load = load
-
         self._num_workers = multiprocessing.cpu_count()
         self._train_ds = BearingDataset([], [])
         self._test_ds = BearingDataset([], [])
