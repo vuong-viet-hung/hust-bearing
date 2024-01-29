@@ -7,7 +7,7 @@ from torch.nn.functional import gelu
 
 class ConvMixer(nn.Module):
     def __init__(self, num_classes: int) -> None:
-        super().__init__(num_classes)
+        super().__init__()
         self.conv = nn.Conv2d(in_channels=1, out_channels=64, kernel_size=3, padding=1)
         self.batch_norm = nn.BatchNorm2d(num_features=64)
         self.pool = nn.MaxPool2d(kernel_size=2)
