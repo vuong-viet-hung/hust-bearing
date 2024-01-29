@@ -1,4 +1,3 @@
-import itertools
 import multiprocessing
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
@@ -73,12 +72,3 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
     @abstractmethod
     def load_from(self, dir_name: str) -> int:
         pass
-
-    def _from(self, subdirs: list[Path]) -> tuple[list[Path], list[int]]:
-        paths = list(
-            itertools.chain.from_iterable(
-                subdir.iterdir() for subdir in subdirs if subdir.is_dir()
-            )
-        )
-        targets = [self.target_from(path.parent.name) for path in paths]
-        return paths, targets
