@@ -1,5 +1,5 @@
-.idea/
 .venv/
+.vscode/
 __pycache__/
 *.ckpt
 *.ipynb
