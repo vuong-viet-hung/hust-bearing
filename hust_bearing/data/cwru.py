@@ -7,7 +7,7 @@ class CWRU(BearingDataModule):
     _dir_name_regex = re.compile(
         r"""
         ([a-zA-Z]+)  # Fault
-        (\d{3})  # Size
+        (\d{3})?  # Size
         (?:@(\d+))?  # Location
         _
         (\d)  # Load
