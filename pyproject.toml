@@ -17,6 +17,7 @@ torchvision = "^0.16.2"
 tqdm = "^4.66.1"
 lightning = {extras = ["pytorch-extra"], version = "^2.1.2"}
 mlp-mixer-pytorch = "^0.1.1"
+torch-tb-profiler = "^0.4.3"
 
 
 [tool.poetry.group.visualization.dependencies]
