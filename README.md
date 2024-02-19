@@ -46,7 +46,7 @@ Open-access data will be provided soon. As of now, there are options to:
 
 The dataset should be structured as such:
 ```
-spectrograms  <-- root directory
+data          <-- root directory
 |---hust      <-- dataset directory
 |   |---B500  <-- directory containing spectrograms
 |   |---B502
