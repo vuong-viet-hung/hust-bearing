@@ -102,8 +102,8 @@ class CWRU(BearingDataModule):
         return self._parse(dir_name).group(1)
 
     def _fault_size_from(self, dir_name: str) -> int:
-        fault_size_as_str = self._parse(dir_name).group(2)
-        return int(fault_size_as_str) if fault_size_as_str is not None else 0
+        fault_size = self._parse(dir_name).group(2)
+        return int(fault_size) if fault_size is not None else 0
 
     def _load_from(self, dir_name: str) -> int:
         return int(self._parse(dir_name).group(4))
