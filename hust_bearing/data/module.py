@@ -1,15 +1,13 @@
 import multiprocessing
-from abc import ABCMeta, abstractmethod
 from pathlib import Path
 
 import lightning as pl
-from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
 from hust_bearing.data.dataset import BearingDataset
 
 
-class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
+class BearingDataModule(pl.LightningDataModule):
     _num_workers = multiprocessing.cpu_count()
 
     def __init__(
@@ -28,31 +26,6 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
         self._train_ds = empty_ds
         self._test_ds = empty_ds
         self._val_ds = empty_ds
-
-    def setup(self, stage: str) -> None:
-        paths = list(self._data_dir.glob("**/*.mat"))
-
-        if self._load is not None:
-            paths = [
-                path for path in paths if self.load_from(path.parent.name) == self._load
-            ]
-
-        targets = [self.target_from(path.parent.name) for path in paths]
-
-        if self._num_samples is not None:
-            _, paths, _, targets = train_test_split(
-                paths, targets, test_size=self._num_samples, stratify=targets
-            )
-
-        if stage in {"fit", "validate"}:
-            train_paths, val_paths, train_targets, val_targets = train_test_split(
-                paths, targets, test_size=0.2, stratify=targets
-            )
-            self._train_ds = BearingDataset(train_paths, train_targets)
-            self._val_ds = BearingDataset(val_paths, val_targets)
-
-        elif stage in {"test", "predict"}:
-            self._test_ds = BearingDataset(paths, targets)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -80,11 +53,3 @@ class BearingDataModule(pl.LightningDataModule, metaclass=ABCMeta):
 
     def predict_dataloader(self) -> DataLoader:
         return self.test_dataloader()
-
-    @abstractmethod
-    def target_from(self, dir_name: str) -> int:
-        pass
-
-    @abstractmethod
-    def load_from(self, dir_name: str) -> int:
-        pass
