@@ -1,3 +1,4 @@
+import itertools
 import random
 import re
 from pathlib import Path
@@ -19,7 +20,8 @@ class CWRU(BearingDataModule):
         """,
         re.VERBOSE,
     )
-    _classes = ["Normal", "B", "IR", "OR"]
+    _classes: list[tuple[str, int]] = [("Normal", 0)]
+    _classes.extend(itertools.product(["B", "IR", "OR"], [7, 14, 21]))
 
     def setup(self, stage: str) -> None:
         paths = list(self._data_dir.glob("**/*.mat"))
@@ -53,29 +55,51 @@ class CWRU(BearingDataModule):
         if self._num_samples is None:
             return paths
 
-        paths_grouped_by_target: list[list[Path]] = [[] for _ in self._classes]
-        for path in paths:
-            target = self._target_from(path.parent.name)
-            paths_grouped_by_target[target].append(path)
+        paths_grouped_by_label = self._group_paths_by_label(paths)
 
         use_balance_sampling = all(
             len(path_group) >= self._num_samples
-            for path_group in paths_grouped_by_target
+            for path_group in paths_grouped_by_label.values()
         )
 
         if not use_balance_sampling:
             return random.sample(paths, self._num_samples)
 
-        sampled_paths = []
         num_samples_per_class, remainder = divmod(self._num_samples, len(self._classes))
-        for idx, path_group in enumerate(paths_grouped_by_target):
+        sampled_paths: list[Path] = []
+        for idx, path_group in enumerate(paths_grouped_by_label.values()):
             if idx < remainder:
                 num_samples_per_class += 1
             sampled_paths.extend(random.sample(path_group, num_samples_per_class))
         return sampled_paths
 
+    def _group_paths_by_label(
+        self, paths: list[Path]
+    ) -> dict[tuple[str, int], list[Path]]:
+        paths_grouped_by_target: dict[tuple[str, int], list[Path]] = {
+            target: [] for target in self._classes
+        }
+        for path in paths:
+            label = self._label_from(path.parent.name)
+            if label in paths_grouped_by_target:
+                paths_grouped_by_target[label].append(path)
+        return paths_grouped_by_target
+
     def _target_from(self, dir_name: str) -> int:
-        return self._classes.index(self._parse(dir_name).group(1))
+        label = self._label_from(dir_name)
+        return self._classes.index(label)
+
+    def _label_from(self, dir_name: str) -> tuple[str, int]:
+        fault_type = self._fault_type_from(dir_name)
+        fault_size = self._fault_size_from(dir_name)
+        return fault_type, fault_size
+
+    def _fault_type_from(self, dir_name: str) -> str:
+        return self._parse(dir_name).group(1)
+
+    def _fault_size_from(self, dir_name: str) -> int:
+        fault_size = self._parse(dir_name).group(2)
+        return int(fault_size) if fault_size is not None else 0
 
     def _load_from(self, dir_name: str) -> int:
         return int(self._parse(dir_name).group(4))
