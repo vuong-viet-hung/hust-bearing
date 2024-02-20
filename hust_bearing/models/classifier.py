@@ -1,4 +1,3 @@
-from abc import ABCMeta, abstractmethod
 from typing import Any
 
 import lightning as pl
@@ -7,7 +6,7 @@ from torch import nn
 from torchmetrics.classification import MulticlassAccuracy
 
 
-class Classifier(pl.LightningModule, metaclass=ABCMeta):
+class Classifier(pl.LightningModule):
     def __init__(self, num_classes: int) -> None:
         super().__init__()
         self.loss = nn.CrossEntropyLoss()
@@ -40,7 +39,3 @@ class Classifier(pl.LightningModule, metaclass=ABCMeta):
     def predict_step(self, *args: Any, **kwargs: Any) -> torch.Tensor:
         (inputs, _), *_ = args
         return self(inputs).argmax(dim=1)
-
-    @abstractmethod
-    def forward(self, *args: Any, **kwargs: Any) -> torch.Tensor:
-        pass
