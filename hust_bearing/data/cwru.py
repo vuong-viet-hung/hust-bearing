@@ -1,6 +1,7 @@
 import itertools
 import random
 import re
+from collections import defaultdict
 from pathlib import Path
 
 from sklearn.model_selection import train_test_split
@@ -22,20 +23,17 @@ class CWRU(BearingDataModule):
         """,
         re.VERBOSE,
     )
-    _test_size = 250
+    _test_size = 500
 
     def setup(self, stage: str) -> None:
         paths = list(self._data_dir.glob("**/*.mat"))
-        filtered_paths = self._filter_by_load(paths)
-        sampled_paths = self._sample_paths(filtered_paths)
-        sampled_targets = [
-            self._target_from(path.parent.name) for path in sampled_paths
-        ]
+        valid_paths = self._drop_invalid(paths)
+        filtered_paths = self._filter_by_load(valid_paths)
+        sampled_paths = self._sample(filtered_paths)
+
+        targets = [self._target_from(path.parent.name) for path in sampled_paths]
         fit_paths, test_paths, fit_targets, test_targets = train_test_split(
-            sampled_paths,
-            sampled_targets,
-            test_size=self._test_size,
-            stratify=sampled_targets,
+            sampled_paths, targets, test_size=self._test_size, stratify=targets
         )
 
         if stage in {"fit", "validate"}:
@@ -48,6 +46,10 @@ class CWRU(BearingDataModule):
         elif stage in {"test", "predict"}:
             self._test_ds = BearingDataset(test_paths, test_targets)
 
+    def _drop_invalid(self, paths: list[Path]) -> list[Path]:
+        classes = set(self._classes)
+        return [path for path in paths if self._label_from(path.parent.name) in classes]
+
     def _filter_by_load(self, paths: list[Path]) -> list[Path]:
         if self._load is None:
             return paths
@@ -55,7 +57,7 @@ class CWRU(BearingDataModule):
             path for path in paths if self._load_from(path.parent.name) == self._load
         ]
 
-    def _sample_paths(self, paths: list[Path]) -> list[Path]:
+    def _sample(self, paths: list[Path]) -> list[Path]:
         if self._num_samples is None:
             return paths
 
@@ -73,20 +75,18 @@ class CWRU(BearingDataModule):
         sampled_paths: list[Path] = []
         for idx, path_group in enumerate(paths_grouped_by_label.values()):
             if idx < remainder:
-                num_samples_per_class += 1
-            sampled_paths.extend(random.sample(path_group, num_samples_per_class))
+                group_num_samples = num_samples_per_class + 1
+            group_sampled_paths = random.sample(path_group, group_num_samples)
+            sampled_paths.extend(group_sampled_paths)
         return sampled_paths
 
     def _group_paths_by_label(
         self, paths: list[Path]
     ) -> dict[tuple[str, int], list[Path]]:
-        paths_grouped_by_target: dict[tuple[str, int], list[Path]] = {
-            target: [] for target in self._classes
-        }
+        paths_grouped_by_target: dict[tuple[str, int], list[Path]] = defaultdict(list)
         for path in paths:
             label = self._label_from(path.parent.name)
-            if label in paths_grouped_by_target:
-                paths_grouped_by_target[label].append(path)
+            paths_grouped_by_target[label].append(path)
         return paths_grouped_by_target
 
     def _target_from(self, dir_name: str) -> int:
@@ -102,8 +102,8 @@ class CWRU(BearingDataModule):
         return self._parse(dir_name).group(1)
 
     def _fault_size_from(self, dir_name: str) -> int:
-        fault_size = self._parse(dir_name).group(2)
-        return int(fault_size) if fault_size is not None else 0
+        fault_size_as_str = self._parse(dir_name).group(2)
+        return int(fault_size_as_str) if fault_size_as_str is not None else 0
 
     def _load_from(self, dir_name: str) -> int:
         return int(self._parse(dir_name).group(4))
