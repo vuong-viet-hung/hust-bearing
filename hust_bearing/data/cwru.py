@@ -10,6 +10,8 @@ from hust_bearing.data.dataset import BearingDataset
 
 
 class CWRU(BearingDataModule):
+    _classes: list[tuple[str, int]] = [("Normal", 0)]
+    _classes.extend(itertools.product(["B", "IR", "OR"], [7, 14, 21]))
     _dir_name_regex = re.compile(
         r"""
         ([a-zA-Z]+)  # Fault
@@ -20,8 +22,7 @@ class CWRU(BearingDataModule):
         """,
         re.VERBOSE,
     )
-    _classes: list[tuple[str, int]] = [("Normal", 0)]
-    _classes.extend(itertools.product(["B", "IR", "OR"], [7, 14, 21]))
+    _test_size = 250
 
     def setup(self, stage: str) -> None:
         paths = list(self._data_dir.glob("**/*.mat"))
@@ -31,12 +32,15 @@ class CWRU(BearingDataModule):
             self._target_from(path.parent.name) for path in sampled_paths
         ]
         fit_paths, test_paths, fit_targets, test_targets = train_test_split(
-            sampled_paths, sampled_targets, test_size=800, stratify=sampled_targets
+            sampled_paths,
+            sampled_targets,
+            test_size=self._test_size,
+            stratify=sampled_targets,
         )
 
         if stage in {"fit", "validate"}:
             train_paths, val_paths, train_targets, val_targets = train_test_split(
-                fit_paths, fit_targets, test_size=200, stratify=fit_targets
+                fit_paths, fit_targets, test_size=self._test_size, stratify=fit_targets
             )
             self._train_ds = BearingDataset(train_paths, train_targets)
             self._val_ds = BearingDataset(val_paths, val_targets)
