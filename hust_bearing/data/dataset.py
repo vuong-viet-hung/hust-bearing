@@ -13,7 +13,7 @@ class BearingDataset(Dataset):
     def __init__(self, paths: list[Path], targets: list[int]) -> None:
         self._paths = paths
         self._targets = torch.tensor(targets)
-        self._transform = _build_transform((64, 64))
+        self._transform = _build_transform((32, 32))
 
     def __len__(self) -> int:
         return len(self._paths)

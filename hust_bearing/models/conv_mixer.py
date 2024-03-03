@@ -17,7 +17,7 @@ class ConvMixer(Classifier):
         self.batch_norm = nn.BatchNorm2d(num_features=64)
         self.pool = nn.MaxPool2d(kernel_size=2)
         self.mixer = MLPMixer(
-            image_size=32,
+            image_size=16,
             channels=64,
             patch_size=8,
             dim=256,
