@@ -2,7 +2,7 @@
 from lightning.pytorch.cli import LightningCLI
 
 from hust_bearing.models import ConvMixer
-from hust_bearing.data import HUST
+from hust_bearing.data import CWRU, HUST
 
 
 def cli_main():
