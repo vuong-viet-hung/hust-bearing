@@ -74,8 +74,9 @@ class CWRU(BearingDataModule):
         num_samples_per_class, remainder = divmod(self._num_samples, len(self._classes))
         sampled_paths: list[Path] = []
         for idx, path_group in enumerate(paths_grouped_by_label.values()):
+            group_num_samples = num_samples_per_class
             if idx < remainder:
-                group_num_samples = num_samples_per_class + 1
+                group_num_samples += 1
             group_sampled_paths = random.sample(path_group, group_num_samples)
             sampled_paths.extend(group_sampled_paths)
         return sampled_paths
