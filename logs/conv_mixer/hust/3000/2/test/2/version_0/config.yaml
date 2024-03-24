@@ -10,7 +10,7 @@ trainer:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs
-      name: conv_mixer/hust/0090/2/test/4
+      name: conv_mixer/hust/3000/2/test/2
       version: null
       log_graph: false
       default_hp_metric: true
@@ -39,7 +39,7 @@ trainer:
       save_on_train_epoch_end: null
       enable_version_counter: true
   fast_dev_run: false
-  max_epochs: 100
+  max_epochs: 30
   min_epochs: null
   max_steps: -1
   min_steps: null
@@ -70,7 +70,7 @@ trainer:
   sync_batchnorm: false
   reload_dataloaders_every_n_epochs: 0
   default_root_dir: null
-ckpt_path: logs/conv_mixer/hust/0090/2/fit/version_0/checkpoints/epoch=91-step=276.ckpt
+ckpt_path: logs/conv_mixer/hust/3000/2/fit/version_0/checkpoints/epoch=13-step=1316.ckpt
 verbose: true
 model:
   class_path: hust_bearing.models.ConvMixer
@@ -81,8 +81,8 @@ data:
   init_args:
     data_dir: data/hust
     batch_size: 32
-    load: 4
-    num_samples: 4090
+    load: 2
+    num_samples: 7000
 optimizer:
   class_path: torch.optim.Adam
   init_args:
