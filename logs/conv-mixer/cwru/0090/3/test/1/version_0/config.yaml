@@ -70,7 +70,7 @@ trainer:
   sync_batchnorm: false
   reload_dataloaders_every_n_epochs: 0
   default_root_dir: null
-ckpt_path: logs/conv_mixer/cwru/0090/3/fit/version_0/checkpoints/epoch=98-step=297.ckpt
+ckpt_path: logs/conv-mixer/cwru/0090/3/fit/version_0/checkpoints/epoch=98-step=297.ckpt
 verbose: true
 model:
   class_path: hust_bearing.models.ConvMixer

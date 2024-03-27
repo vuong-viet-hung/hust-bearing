@@ -10,7 +10,7 @@ trainer:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs
-      name: conv_mixer/hust/0090/0/fit
+      name: conv-mixer/hust/0090/0/fit
       version: null
       log_graph: false
       default_hp_metric: true
