@@ -10,7 +10,7 @@ trainer:
     class_path: lightning.pytorch.loggers.TensorBoardLogger
     init_args:
       save_dir: logs
-      name: conv-mixer/hust/0090/4/test/2
+      name: conv-mixer/hust/3000/4/test/0
       version: null
       log_graph: false
       default_hp_metric: true
@@ -81,7 +81,7 @@ data:
   init_args:
     data_dir: data/hust
     batch_size: 32
-    load: 2
+    load: 0
     num_samples: 7000
 optimizer:
   class_path: torch.optim.Adam
