@@ -21,7 +21,7 @@ The team behind this work is [Mandevices Laboratory](https://www.facebook.com/ma
 
 ### Poetry installation
 
-- [Install Poetry](https://python-poetry.org/docs/)
+- [Install Poetry](https://python-poetry.org/docs/#installation)
 - Clone the repository
 ```commandline
 git clone https://github.com/vuong-viet-hung/hust-bearing.git
