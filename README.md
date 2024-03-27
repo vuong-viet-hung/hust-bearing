@@ -56,4 +56,25 @@ data          <-- root directory
     |   ...    
 ```
 
+### Training
+Training configuration file is saved as: logs/\<model\>/\<dataset\>/\<num_samples\>/\<load\>/fit/version_*/config.yaml.
+
+For example, to train the ConvMixer model on HUST Bearing dataset, using 3000 samples at load 4
+```
+hust-bearing fit --config=logs/conv-mixer/hust/3000/4/fit/version_0/config.yaml
+```
+The model checkpoints will be saved at logs/conv-mamba/hust/3000/0/fit/version_0/checkpoints/.
+
+### Testing
+Testing configuration file is saved as: logs/\<model\>/\<dataset\>/\<num_samples\>/\<train_load\>/test/\<test_load\>/version_*/config.yaml.
+
+For example, to test the trained model on load 2
+```
+hust-bearing test --config=logs/conv-mixer/hust/3000/4/test/2/version_0/config.yaml \
+--ckpt_path=logs/conv-mixer/hust/3000/4/fit/version_0/checkpoints/<saved_model>.ckpt
+```
+Make sure to have the correct path to the saved model.
+
+We are working on publishing our pretrained models. As of now, you must retrain the model for evaluation.
+
 ## About Us
