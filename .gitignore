@@ -2,7 +2,6 @@
 .vscode/
 __pycache__/
 *.ckpt
-*.egg-info
 *.ipynb
 *.mat
 *.png
